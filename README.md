@@ -27,7 +27,8 @@ Just run BoneSound_Equailzer.py and test all commands
 ## Deployment
 
 You can build this as an exe by installing auto-py-to-exe and runnning it.
-*Don't forgot to add ffmpeg.exe and youre icon to make it work*
+
+*Don't forget to add ffmpeg.exe and youre icon to make it work*
 
 ## Built With
 
@@ -37,4 +38,4 @@ You can build this as an exe by installing auto-py-to-exe and runnning it.
 
 ## Authors
 
-* **Maxime ROUCHER** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Maxime ROUCHER** - *Initial work* - [Maxime Roucher](https://github.com/maximeroucher)
