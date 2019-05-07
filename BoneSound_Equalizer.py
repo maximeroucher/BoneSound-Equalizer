@@ -279,7 +279,7 @@ class YoutubeDownloader(Thread):
             # Change le messageg de la fenêtre
             self.msg.set("La musique à déjà été enregistrée")
 
- 
+
 #
 # ---------- Classe Inteface ----------------------------------------------------------------------
 #
