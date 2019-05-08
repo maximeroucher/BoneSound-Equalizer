@@ -24,7 +24,6 @@ import requests
 import youtube_dl
 from lxml import etree
 from pydub import AudioSegment
-from textblob import TextBlob
 
 
 #
@@ -419,8 +418,8 @@ class Inteface:
 
         # Fichiers actuellement ouvert dans l'application
         self.files = []
-        # Différents types de musique et leur nombre de répétition du filtre associé TODO:
-        self.tags = {"Rap (5)": 5, "Musique Classique (4)": 4, "Jazz (6)": 6, "Hip-Hop (7)": 7, "Rock (8)": 8, "Métal (9)": 9, "RnB (10)": 10, "Pop (3)": 3, "Blues (2)": 2}
+        # Différents types de musique et leur nombre de répétition du filtre associé
+        self.tags = {"Rap / Rap": 5, "Musique Classique / Classical Music": 4, "Jazz / Jazz": 6, "Hip-Hop / Hip-Hop": 7, "Rock / Rock": 8, "Métal / Metal": 9, "RnB / RnB": 10, "Pop  / Pop": 3, "Blues / Blues": 1}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
         # Type de musique séléctionné (IntVar permet de modifier la valeru des Radioboutons en le modifiant)
@@ -469,8 +468,14 @@ class Inteface:
 
         # Crée un RadioBouton ayant accès à self.MusicType pour chaque type de musique
         for x, t in enumerate(self.tags.keys()):
+            # Sépare le français de l'anglais
+            fr, en = t.split(' / ')
+            # Permet de changer le texte contenu du texte
+            m = Message(text={'fr': [fr], 'en': [en]}, actualLanguage=self.langue)
             # text est le message écrit à côté du bouton, value est la valeur que le bouton donne à self.MusicType quand il est séléctionné (x + 1 car 0 n'est pas admis)
-            rdb = Radiobutton(self.MusicTags, text=t, value=x + 1, variable=self.musicType)
+            rdb = Radiobutton(self.MusicTags, text=m.getTxt(), value=x + 1, variable=self.musicType)
+            # Ajoute à la liste des objets qui peuvent changer de texte
+            self.alltxtObject['LabelFrame'].append([rdb, m])
             # Le nom du bouton
             style_name = rdb.winfo_class()
             # Configure la style du bouton
