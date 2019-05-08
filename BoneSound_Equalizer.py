@@ -22,6 +22,7 @@ import youtube_dl
 from lxml import etree
 from pydub import AudioSegment
 import subprocess
+import json
 
 
 #
@@ -61,7 +62,7 @@ class ProgressBar():
 
 class SoundCloudDownloader(Thread):
 
-    def __init__(self, url, name, sid, progress, msg):
+    def __init__(self, url, name, sid, progress, msg, out):
         """ Téléchargeur de vidéos depuis Soundcloud
         itype : 3 str, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
@@ -79,6 +80,8 @@ class SoundCloudDownloader(Thread):
         self.song_id = sid
         # Nom de la musique
         self.title = name
+        # Le dossier d'enregistrement de la musique
+        self.out = out
 
 
     def download_file(self, url, filename):
@@ -107,7 +110,7 @@ class SoundCloudDownloader(Thread):
         stream_url = self.get_stream_url(self.song_id)
         self.msg.set(f"Téléchargement de {self.title} au format mp3")
         # Télécharge la musique
-        self.download_file(stream_url, f"./Music/{self.title}.mp3")
+        self.download_file(stream_url, f"{self.out}/{self.title}.mp3")
         # Change le message
         self.msg.set("Aucune opération actuellement")
 
@@ -119,7 +122,7 @@ class SoundCloudDownloader(Thread):
 
 class Equalizer(Thread):
 
-    def __init__(self, filename, nbRepetition, progress, msg, gain):
+    def __init__(self, filename, nbRepetition, progress, msg, gain, outfile):
         """ Transforme la musique pour le casque
         itype : str, int, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
@@ -129,11 +132,13 @@ class Equalizer(Thread):
         self.upperFrequency = 450
         # Fréquence au  dessus de laquelle, les fréquences sont descendus de 6 dB
         self.lowerFrequency = 9000
+        # Le dossier d'enregistrement de la musique
+        self.out = outfile
         # Nom du fichier à transformer (déjà en wav)
         self.filename = self.get_song(filename)
         # Nom de fichier en sortie
         ext = filename.split("\\")[-1].split('.')[0]
-        self.outname = f'./Music/out - {ext}.wav'
+        self.outname = f'{self.out}/out - {ext}.wav'
         # Barre de progression de la fenêtre
         self.progress = progress
         # Message de la fenêtre
@@ -147,7 +152,7 @@ class Equalizer(Thread):
     def get_song(self, path):
         if not path.endswith(".wav"):
             ext = path.split("\\")[-1].split('.')[0]
-            outname = f'./Music/{ext}.wav'
+            outname = f'{self.out}/{ext}.wav'
             subprocess.call(['ffmpeg', '-i', path, outname])
             return os.path.abspath(outname)
         return path
@@ -211,7 +216,7 @@ class Equalizer(Thread):
 
 class YoutubeDownloader(Thread):
 
-    def __init__(self, url, name, progress, msg):
+    def __init__(self, url, name, progress, msg, out):
         """ Téléchargeur de vidéos depuis youtube
         itype : 2 str, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
@@ -223,8 +228,10 @@ class YoutubeDownloader(Thread):
         self.progressbar = progress
         # Message de la fenêtre
         self.msg = msg
+        # Le dossier d'enregistrement de la musique
+        self.out = out
         # Lieu de sauvegarde du fichier transformé
-        self.musicFolder = './Music/%(title)s.%(ext)s'
+        self.musicFolder = f'{self.out}/%(title)s.%(ext)s'
         # Option de téléchargement de la musique
         self.ydl_opts_Mp3 = {
             # Meilleur format audio
@@ -271,12 +278,8 @@ class YoutubeDownloader(Thread):
     def run(self):
         """ Focntion pricipale, appellée quand .start() est appelé
         """
-        # Si le fichier pour stocker les musiques n'existe pas
-        if not "Music" in os.listdir():
-            # Crée le fichier
-            os.makedirs("Music")
         # Si la musique n'a pas déjà été téléchargé
-        if not f"{self.name}.wav" in os.listdir("./Music/"):
+        if not f"{self.name}.wav" in os.listdir(f"{self.out}/"):
             # Change le message de la fenêtre
             self.msg.set(f"Télécharge : {self.name} au format wav")
             # Télécharge la musique avec les options définis précédemment
@@ -318,6 +321,8 @@ class Inteface:
         style = Style(self.fen)
         # Initailisation par défaut
         style.theme_use('alt')
+        # Le nom du fihier avec les paramètres
+        self.ParamFile = "saveLink.json"
 
 
         # Initialisation des variables
@@ -344,101 +349,136 @@ class Inteface:
         # Initialisation de la liste des musique à convertir
 
         # Cadre contenant la liste
-        self.MusicFiles = LabelFrame(self.fen, text=" Liste des musiques à convertir ", padx=10, pady=10)
+        MusicFiles = LabelFrame(self.fen, text=" Liste des musiques à convertir ", padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicFiles.place(x=self.width - 550, y=25)
-        self.MusicFiles.configure(background='#202225', foreground="#b6b9be")
+        MusicFiles.place(x=self.width - 550, y=25)
+        MusicFiles.configure(background='#202225', foreground="#b6b9be")
         # Liste contenant les musiques
-        self.filesList = Listbox(self.MusicFiles, width=82, height=30)
+        self.filesList = Listbox(MusicFiles, width=82, height=30)
         self.filesList.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Inclusion de la liste dans le cadre
         self.filesList.pack()
 
+
         # Initialisation de la liste des types de musiques
 
         # Cadre contenant la liste
-        self.MusicTags = LabelFrame(self.fen, text=" Liste des différents types de musiques ", padx=10, pady=10)
+        MusicTags = LabelFrame(self.fen, text=" Liste des différents types de musiques ", padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=75, y=self.height / 2 - 50)
-        self.MusicTags.configure(background='#202225', foreground="#b6b9be")
+        MusicTags.place(x=75, y=self.height / 2 - 50)
+        MusicTags.configure(background='#202225', foreground="#b6b9be")
         # Crée un RadioBouton ayant accès à self.MusicType pour chaque type de musique
         for x, t in enumerate(self.tags.keys()):
             # text est le message écrit à côté du bouton, value est la valeur que le bouton donne à self.MusicType quand il est séléctionné (x + 1 car 0 n'est pas admis)
-            rdb = Radiobutton(self.MusicTags, text=t, value=x + 1, variable=self.musicType)
+            rdb = Radiobutton(MusicTags, text=t, value=x + 1, variable=self.musicType)
+            # Le nom du bouton
             style_name = rdb.winfo_class()
+            # Configure la style du bouton
             style.configure(style_name, foreground="#b6b9be", background='#202225', indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
+            # Précise les couleurs en fonction des états du bouton
             style.map(style_name,
-                    foreground=[('disabled', "#b6b9be"),
-                                ('pressed', "#FAA61A"),
-                                ('active', "#FAA61A")],
-                      background=[('disabled', '#202225'),
-                                  ('pressed', '!focus', '#202225'),
-                                  ('active', '#202225')],
-                      indicatorcolor=[('selected', "#FAA61A"),
-                                      ('pressed', "#FAA61A")]
-                      )
+                    foreground=[('disabled', "#b6b9be"), ('pressed', "#FAA61A"), ('active', "#FAA61A")],
+                      background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')],
+                      indicatorcolor=[('selected', "#FAA61A"), ('pressed', "#FAA61A")])
+            # Inclusion du bouton
             rdb.pack()
+
 
         # Initialisation de la barre de progression
 
         # Cadre contenant la barre
-        self.Pgb = LabelFrame(self.fen, text=" Progrès de l'opération ", padx=10, pady=10)
+        Pgb = LabelFrame(self.fen, text=" Progrès de l'opération ", padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.Pgb.place(x=75, y=560)
-        self.Pgb.configure(background='#202225', foreground="#b6b9be")
+        Pgb.place(x=75, y=560)
+        Pgb.configure(background='#202225', foreground="#b6b9be")
         # Label au dessus de la barre qui affiche l'opération en cours (son message est ce que self.msg contient)
-        self.operatingLabel = Label(self.Pgb, textvariable=self.msg)
+        operatingLabel = Label(Pgb, textvariable=self.msg)
         # Inclusion du label dans le cadre
-        self.operatingLabel.pack()
-        self.operatingLabel.configure(background='#202225', foreground="#b6b9be")
-        # Barre de progression qui suit l'évolution des différentes opérations de l'application
+        operatingLabel.pack()
+        operatingLabel.configure(background='#202225', foreground="#b6b9be")
+        # Style de la barre de progression
         s = Style()
+        # Charge un style par défaut
         s.theme_use('alt')
+        # Configure le style
         s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background='#8d93fa')
-        self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
+        # Barre de progression qui suit l'évolution des différentes opérations de l'application
+        self.progressbar = Progressbar(Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
         # La valeur maximale de la barre est 100 (100%)
         self.progressbar["maximum"] = 100
         # Inclusion de la barre de progression dans le cadre
         self.progressbar.pack()
 
+
         # Initialisation des boutons
 
         # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        self.openFileButton = Button(self.fen, text=" Ouvrir un fichier ", command=self.openExplorateur)
+        openFileButton = Button(self.fen, text=" Ouvrir un fichier ", command=self.openExplorateur)
         # Placement du bouton dans la fenêtre
-        self.openFileButton.place(x=20, y=30)
-        self.openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        openFileButton.place(x=20, y=30)
+        # Configure le bouton
+        openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
 
         # Cadre pour entrer le lien
-        self.YtLink = LabelFrame(self.fen, text=" Lien Youtube ou SoundCloud de la musique à convertir ", padx=10, pady=10)
+        YtLink = LabelFrame(self.fen, text=" Lien Youtube ou SoundCloud de la musique à convertir ", padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.YtLink.place(x=25, y=100)
-        self.YtLink.configure(background='#202225', foreground="#b6b9be")
+        YtLink.place(x=25, y=100)
+        # Configure le cadre
+        YtLink.configure(background='#202225', foreground="#b6b9be")
         # Une Entry permet à l'utilisateur de rentrer du texte
-        self.Link = Entry(self.YtLink, width=50)
+        self.Link = Entry(YtLink, width=50)
         self.Link.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Inclusion du champ d'entrée dans le cadre
         self.Link.pack()
 
+
         # Bouton "Télécharger" qui appelle downloadMusic au clic
-        self.dlYtButton = Button(self.fen, text=" Télécharger ", command=self.downloadMusic)
+        dlYtButton = Button(self.fen, text=" Télécharger ", command=self.downloadMusic)
         # Placement du cadre dans la fenêtre
-        self.dlYtButton.place(x=25, y=190)
-        self.dlYtButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be", borderwidth=0, highlightthickness=0)
+        dlYtButton.place(x=25, y=190)
+        # Configure le bouton
+        dlYtButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be", borderwidth=0, highlightthickness=0)
+
 
         # Bouton "Conversion" qui appelle conversion au clic
-        self.convBtn = Button(self.fen, text=" Conversion ", command=self.conversion)
+        convBtn = Button(self.fen, text=" Conversion ", command=self.conversion)
         # Placement du cadre dans la fenêtre
-        self.convBtn.place(x=150, y=190)
-        self.convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        convBtn.place(x=150, y=190)
+        # Configure le bouton
+        convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
 
         # Curseur du gain de volume
-        self.VolumeLabel = LabelFrame(self.fen, text=' Volume (dB) ')
-        self.VolumeLabel.configure(background="#202225", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
-        self.VolumeLabel.place(x=340, y=190)
-        scale = Scale(self.VolumeLabel, from_=-10, to=100, resolution=1, tickinterval=10, length=300, variable=self.volumeGain)
+
+        # Cadre du curseur
+        VolumeLabel = LabelFrame(self.fen, text=' Volume (dB) ')
+        # Configure le cadre
+        VolumeLabel.configure(background="#202225", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+        # Place le cadre dans la fenêtre
+        VolumeLabel.place(x=340, y=190)
+        # Création du curseur
+        scale = Scale(VolumeLabel, from_=-10, to=100, resolution=1, tickinterval=10, length=300, variable=self.volumeGain)
+        # Configure le curseur
         scale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
+        # Inclusion du curseur
         scale.pack()
+
+
+        # Le lien vers le fichier de sauvegarde
+        self.saveLink = self.getSaveLink()
+
+
+    def getSaveLink(self):
+        if self.ParamFile in os.listdir():
+            return json.load(open(self.ParamFile))["OutputFile"]
+        else:
+            path = easygui.diropenbox("Séléctionner un fichier de sauvegarde des musiques")
+            if path != None:
+                json.dump({"OutputFile": path}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+            else:
+                path = './Music'
+            return path
 
 
     def downloadMusic(self):
@@ -462,7 +502,7 @@ class Inteface:
                         title = ''.join(c for c in title if c in allowed)
                         a = title.split("by")
                         a.reverse()
-                        return ' - '.join(a)
+                        return ' - '.join([x.strip() for x in a])
 
                     def get_title(html):
                         """ Récupère le titre de la musique
@@ -492,9 +532,9 @@ class Inteface:
                     # Récupère l'identifiant de la musique
                     sid = get_sid(page)
                     # Télécharge le lien avec le Téléchargeur SoundCloud
-                    SoundCloudDownloader(link, name, sid, self.progressbar, self.msg).start()
+                    SoundCloudDownloader(link, name, sid, self.progressbar, self.msg, self.saveLink).start()
                     # Ajoute le fichier au fichiers à convertir
-                    self.files.append(os.path.abspath(f'./Music/{name}.mp3'))
+                    self.files.append(os.path.abspath(f'{self.saveLink}/{name}.mp3'))
                     # Affiche le fichier dans la liste des fichiers à convertir
                     self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
                 # Si le lien un lien Youtube
@@ -502,9 +542,9 @@ class Inteface:
                     # Récupère le nom de la musique
                     name = etree.HTML(urllib.request.urlopen(link).read()).xpath("//span[@id='eow-title']/@title")[0]
                     # Télécharge le lien avec le Téléchargeur Youtube
-                    YoutubeDownloader(link, name, self.progressbar, self.msg).start()
+                    YoutubeDownloader(link, name, self.progressbar, self.msg, self.saveLink).start()
                     # Ajoute le fichier au fichiers à convertir
-                    self.files.append(os.path.abspath(f'./Music/{name}.wav'))
+                    self.files.append(os.path.abspath(f'{self.saveLink}/{name}.wav'))
                     # Affiche le fichier dans la liste des fichiers à convertir
                     self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
                 # Si la lien n'est pas correct
@@ -536,7 +576,7 @@ class Inteface:
             gain = self.volumeGain.get()
             self.volumeGain.set(10)
             # lance l'equalizer
-            Equalizer(music, self.tags[musictype], self.progressbar, self.msg, gain).start()
+            Equalizer(music, self.tags[musictype], self.progressbar, self.msg, gain, self.saveLink).start()
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
