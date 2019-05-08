@@ -3,16 +3,19 @@
 #
 
 from __future__ import unicode_literals
+
 import contextlib
+import json
 import math
 import os
 import re
+import subprocess
 import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, StringVar, Tk, messagebox, Scale
-from tkinter.ttk import Progressbar, Style, Radiobutton
+from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox
+from tkinter.ttk import Progressbar, Radiobutton, Style
 from urllib.request import urlretrieve
 
 import easygui
@@ -21,8 +24,63 @@ import requests
 import youtube_dl
 from lxml import etree
 from pydub import AudioSegment
-import subprocess
-import json
+from textblob import TextBlob
+
+
+#
+# ---------- Classe Message -------------------------------------------------------------------
+#
+
+
+class Message():
+
+    def __init__(self, text, actualLanguage, addon="", msg=None):
+        """ Permet de changer le texte d'un Label, LabelFrame ou Button même si ce dernier est controllé par un thread
+        itype : dict {fr: [], en:[]}, 'fr' / 'en', str, tkinter.StringVar
+        """
+        # Le StringVar perrmet de changer les labels et les bouttons
+        self.msg = msg
+        # Le dictionnaire contenant les phrases en français et en anglais
+        self.text = text
+        # La langue actuelle de l'application
+        self.langue = actualLanguage
+        # Le numéro du message actuel
+        self.actualMsg = 0
+        # Dans le cas ou le message contient un {} à formatter
+        self.addon = addon
+
+
+    def update(self):
+        """ Change le StringVar
+        """
+        self.msg.set(self.getTxt())
+
+
+    def getTxt(self):
+        """ Retourne le texte correspondant à la langue, au numéro et avec le formattage s'il en faut un
+        """
+        return self.text[self.langue][self.actualMsg].format(self.addon)
+
+
+    def switchLang(self, langue):
+        """ Change la langue
+        itype : str('fr' / 'en')
+        """
+        self.langue = langue
+
+
+    def changeMsg(self, numMsg):
+        """ Change le numéro du message
+        itype : int
+        """
+        self.actualMsg = numMsg
+
+
+    def addPrecision(self, text):
+        """ Change l'addon
+        itype : str
+        """
+        self.addon = text
 
 
 #
@@ -43,6 +101,9 @@ class ProgressBar():
 
 
     def __call__(self, block_num, block_size, total_size):
+        """ Opération appelée à chaque itération du téléchargement
+        itype : 3 int
+        """
         # Niveau de progression
         downloaded = block_num * block_size
         # Si le téléchagement n'est pas finit
@@ -51,7 +112,7 @@ class ProgressBar():
             self.progress["value"] = downloaded * 100 / total_size
         else:
             # Change le texte et la barre
-            self.msg.set("Fin du téléchargement")
+            self.msg.changeMsg(1)
             self.progress["value"] = 0
 
 
@@ -85,7 +146,7 @@ class SoundCloudDownloader(Thread):
 
 
     def download_file(self, url, filename):
-        """ Télécharge le fichier
+        """ Télécharge le fichier avec ProgressBar comme hook
         itype : 2 str
         """
         urlretrieve(url, filename, ProgressBar(self.progress, self.msg))
@@ -96,23 +157,30 @@ class SoundCloudDownloader(Thread):
         itype : str
         rtype : str
         """
-        stream_url = "https://api.soundcloud.com/i1/tracks/{0}/streams?client_id={1}".format(sid, self.client_id)
-        json_stream = requests.get(stream_url)
-        return json_stream.json()['http_mp3_128_url']
+        return requests.get("https://api.soundcloud.com/i1/tracks/{0}/streams?client_id={1}".format(sid, self.client_id)).json()['http_mp3_128_url']
 
 
     def run(self):
         """ Télécharge la musique
         """
         # Change le message
-        self.msg.set("Recherche du morceau")
+        self.msg.changeMsg(2)
+        # Update le texte
+        self.update()
         # Récupère le stream de la musique
         stream_url = self.get_stream_url(self.song_id)
-        self.msg.set(f"Téléchargement de {self.title} au format mp3")
+        # Change le message
+        self.msg.changeMsg(3)
+        # Ajoute le titre de la musique au message
+        self.msg.addPrecision(self.title)
+        # Update le texte
+        self.update()
         # Télécharge la musique
         self.download_file(stream_url, f"{self.out}/{self.title}.mp3")
         # Change le message
-        self.msg.set("Aucune opération actuellement")
+        self.msg.changeMsg(0)
+        # Update le texte
+        self.update()
 
 
 #
@@ -150,11 +218,20 @@ class Equalizer(Thread):
 
 
     def get_song(self, path):
+        """ Récupère le chemin vers la musique et convertit en wav les autres formats
+        itype : str (path)
+        """
+        # Si la musique n'est pas en .wav
         if not path.endswith(".wav"):
+            # Récupère la nom de la musique sans l'extension
             ext = path.split("\\")[-1].split('.')[0]
+            # Lieu de sauvgarde du fichier une fois converti en .wav
             outname = f'{self.out}/{ext}.wav'
+            # Convertit le fchier en .wav
             subprocess.call(['ffmpeg', '-i', path, outname])
+            # Retourne le chemin vers la musique convertie
             return os.path.abspath(outname)
+        # Sinon, retourne le chemin sans modification
         return path
 
 
@@ -178,7 +255,7 @@ class Equalizer(Thread):
         # Progression de la barre
         x = 1
         # Change le message de la fenêtre
-        self.msg.set('Modification')
+        self.msg.changeMsg(4)
         # Ouvre le fichier à transformer
         song = AudioSegment.from_wav(self.filename)
         # Change la barre de progression de la fenêtre
@@ -198,13 +275,13 @@ class Equalizer(Thread):
         x += 1
         self.progress['value'] = x / max_value * 100
         # Change le message de la fenêtre
-        self.msg.set('Sauvegarde')
+        self.msg.changeMsg(5)
         # Augmente le volume pour compenser les filtres
         song = song + self.gain
         # Exporte le fichier
         song.export(self.outname, format="wav")
         # Change le message de la fenêtre
-        self.msg.set("Aucune opération actuellement")
+        self.msg.changeMsg(0)
         # Change la barre de progression de la fenêtre
         self.progress['value'] = 0
 
@@ -267,12 +344,16 @@ class YoutubeDownloader(Thread):
             # Change le message est remet à 0 la barre de progression
             file_tuple = os.path.split(os.path.abspath(d['filename']))
             self.progressbar['value'] = 0
-            self.msg.set(f"Fin du téléchargement de {file_tuple[1].split('.')[0]}")
+            self.msg.changeMsg(6)
+            self.msg.addPrecision({file_tuple[1].split('.')[0]})
+            self.msg.update()
         # Si le téléchargement est en cours
         if d['status'] == 'downloading':
             # Change le message est met à jour la barre de progression en fonction de l'avanecment du téléchargement
             self.progressbar['value'] = d['_percent_str'].split("%")[0]
-            self.msg.set(f"Fin du téléchargement éstimé dans {d['_eta_str']}")
+            self.msg.changeMsg(7)
+            self.msg.addPrecision({d['_eta_str']})
+            self.msg.update()
 
 
     def run(self):
@@ -281,16 +362,20 @@ class YoutubeDownloader(Thread):
         # Si la musique n'a pas déjà été téléchargé
         if not f"{self.name}.wav" in os.listdir(f"{self.out}/"):
             # Change le message de la fenêtre
-            self.msg.set(f"Télécharge : {self.name} au format wav")
+            self.msg.changeMsg(8)
+            self.msg.addPrecision(self.name)
+            self.msg.update()
             # Télécharge la musique avec les options définis précédemment
             with youtube_dl.YoutubeDL(self.ydl_opts_Mp3) as ydl:
                 ydl.download([self.url])
             # Change le messageg à la fin du téléchargement du fichier
-            self.msg.set("Aucune opération actuellement")
+            self.msg.changeMsg(9)
+            self.msg.update()
         # Si le fichier a déjà été téléchargé
         else:
             # Change le messageg de la fenêtre
-            self.msg.set("La musique à déjà été enregistrée")
+            self.msg.changeMsg(0)
+            self.msg.update()
 
 
 #
@@ -301,6 +386,7 @@ class YoutubeDownloader(Thread):
 class Inteface:
 
     def __init__(self):
+
         # Initialisation de la fenêtre
 
         # Déclaration d'un objet Tkinter
@@ -323,16 +409,17 @@ class Inteface:
         style.theme_use('alt')
         # Le nom du fihier avec les paramètres
         self.ParamFile = "saveLink.json"
+        # Le lien de sauvegarde et la langue de l'application
+        self.saveLink, self.langue = self.getParam()
+        # Liste de tout les objets contenant du texte
+        self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
 
 
         # Initialisation des variables
 
-        # Initialisation du message (StringVar permet de modifier le texte de la fenêtre en le modifiant)
-        self.msg = StringVar()
-        self.msg.set("Aucune opération actuellement")
         # Fichiers actuellement ouvert dans l'application
         self.files = []
-        # Différents types de musique et leur nombre de répétition du filtre associé
+        # Différents types de musique et leur nombre de répétition du filtre associé TODO:
         self.tags = {"Rap (5)": 5, "Musique Classique (4)": 4, "Jazz (6)": 6, "Hip-Hop (7)": 7, "Rock (8)": 8, "Métal (9)": 9, "RnB (10)": 10, "Pop (3)": 3, "Blues (2)": 2}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
@@ -348,13 +435,19 @@ class Inteface:
 
         # Initialisation de la liste des musique à convertir
 
+        # Permet de changer le texte contenu dans le cadre
+        self.musicLabel = Message(text={'fr': [" Liste des musiques à convertir "], 'en': [' List of music to convert ']}, actualLanguage=self.langue)
         # Cadre contenant la liste
-        MusicFiles = LabelFrame(self.fen, text=" Liste des musiques à convertir ", padx=10, pady=10)
+        self.MusicFiles = LabelFrame(self.fen, text=self.musicLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        MusicFiles.place(x=self.width - 550, y=25)
-        MusicFiles.configure(background='#202225', foreground="#b6b9be")
+        self.MusicFiles.place(x=self.width - 550, y=25)
+        # Configure l'affichage du cadre
+        self.MusicFiles.configure(background='#202225', foreground="#b6b9be")
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['LabelFrame'].append([self.MusicFiles, self.musicLabel])
         # Liste contenant les musiques
-        self.filesList = Listbox(MusicFiles, width=82, height=30)
+        self.filesList = Listbox(self.MusicFiles, width=82, height=30)
+        # Configure l'affichage de la listbox
         self.filesList.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Inclusion de la liste dans le cadre
         self.filesList.pack()
@@ -362,15 +455,22 @@ class Inteface:
 
         # Initialisation de la liste des types de musiques
 
+        # Permet de changer le texte contenu dans le cadre
+        self.tagLabel = Message(text={'fr': [" Liste des différents types de musiques "], 'en': [' List of the different type of music ']}, actualLanguage=self.langue)
         # Cadre contenant la liste
-        MusicTags = LabelFrame(self.fen, text=" Liste des différents types de musiques ", padx=10, pady=10)
+        self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        MusicTags.place(x=75, y=self.height / 2 - 50)
-        MusicTags.configure(background='#202225', foreground="#b6b9be")
+        self.MusicTags.place(x=75, y=self.height / 2 - 50)
+        # Configure l'affichage du cadre
+        self.MusicTags.configure(background='#202225', foreground="#b6b9be")
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['LabelFrame'].append([self.MusicTags, self.tagLabel])
+
+
         # Crée un RadioBouton ayant accès à self.MusicType pour chaque type de musique
         for x, t in enumerate(self.tags.keys()):
             # text est le message écrit à côté du bouton, value est la valeur que le bouton donne à self.MusicType quand il est séléctionné (x + 1 car 0 n'est pas admis)
-            rdb = Radiobutton(MusicTags, text=t, value=x + 1, variable=self.musicType)
+            rdb = Radiobutton(self.MusicTags, text=t, value=x + 1, variable=self.musicType)
             # Le nom du bouton
             style_name = rdb.winfo_class()
             # Configure la style du bouton
@@ -386,15 +486,38 @@ class Inteface:
 
         # Initialisation de la barre de progression
 
+        # Permet de changer le texte contenu dans le cadre
+        self.pgbLabel = Message(text={'fr': [" Progrès de l'opération "], 'en': [' Progress of the operation ']}, actualLanguage=self.langue)
         # Cadre contenant la barre
-        Pgb = LabelFrame(self.fen, text=" Progrès de l'opération ", padx=10, pady=10)
+        self.Pgb = LabelFrame(self.fen, text=self.pgbLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        Pgb.place(x=75, y=560)
-        Pgb.configure(background='#202225', foreground="#b6b9be")
-        # Label au dessus de la barre qui affiche l'opération en cours (son message est ce que self.msg contient)
-        operatingLabel = Label(Pgb, textvariable=self.msg)
+        self.Pgb.place(x=75, y=560)
+        # Configure l'affichage du cadre
+        self.Pgb.configure(background='#202225', foreground="#b6b9be")
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['LabelFrame'].append([self.Pgb, self.pgbLabel])
+        # Liste de tout les messages que peut afficher le label
+        allMsgPossible = {
+            'fr':
+            ["Aucune opération actuellement", "Fin du téléchargement", "Recherche du morceau",
+             "Téléchargement de {} au format mp3", "Modification", "Sauvegarde",
+             "Fin du téléchargement de {}", "Fin du téléchargement éstimé dans {}",
+             "Télécharge: {} au format wav", "La musique à déjà été enregistrée"],
+            'en':
+            ["No operation currently", "End of the download", "Search for the song",
+             "Downloading of {} at mp3 format", "Changing", "Saving", "End of the download of",
+             "End estimated in {}", "Download: {} in wav format", "The song has already been downloaded"]}
+        # Permet de changer le texte contenu dans le label
+        self.msg = Message(msg=StringVar(), text=allMsgPossible, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.msg.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.msg)
+        # Explique l'opération en cours
+        operatingLabel = Label(self.Pgb, textvariable=self.msg.msg)
         # Inclusion du label dans le cadre
         operatingLabel.pack()
+        # Configure l'affichage du label
         operatingLabel.configure(background='#202225', foreground="#b6b9be")
         # Style de la barre de progression
         s = Style()
@@ -403,50 +526,83 @@ class Inteface:
         # Configure le style
         s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background='#8d93fa')
         # Barre de progression qui suit l'évolution des différentes opérations de l'application
-        self.progressbar = Progressbar(Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
+        self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
         # La valeur maximale de la barre est 100 (100%)
         self.progressbar["maximum"] = 100
         # Inclusion de la barre de progression dans le cadre
         self.progressbar.pack()
 
 
+        # Initialisation de la saisie de texte
+
+        # Permet de changer le texte contenu dans le cadre
+        self.ytlabel = Message(text={'fr': [" Lien Youtube ou SoundCloud de la musique à convertir "], 'en': [" Youtube or SoundCloud link of the music to convert "]}, actualLanguage=self.langue)
+        # Cadre pour entrer le lien
+        self.YtLink = LabelFrame(self.fen, text=self.ytlabel.getTxt(), padx=10, pady=10)
+        # Placement du cadre dans la fenêtre
+        self.YtLink.place(x=25, y=100)
+        # Configure le cadre
+        self.YtLink.configure(background='#202225', foreground="#b6b9be")
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['LabelFrame'].append([self.YtLink, self.ytlabel])
+        # Une Entry permet à l'utilisateur de rentrer du texte
+        self.Link = Entry(self.YtLink, width=50)
+        # Configure l'affichage de la saisie
+        self.Link.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+        # Inclusion du champ d'entrée dans le cadre
+        self.Link.pack()
+
+
         # Initialisation des boutons
 
+        # Permet de changer le texte contenu dans le bouton
+        self.optlabel = Message(msg=StringVar(), text={'fr': [" Ouvrir un fichier "], 'en': [" Open a file "]}, actualLanguage=self.langue)
         # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        openFileButton = Button(self.fen, text=" Ouvrir un fichier ", command=self.openExplorateur)
+        openFileButton = Button(self.fen, textvariable=self.optlabel.msg, command=self.openExplorateur)
+        # Affiche le texte par défaut
+        self.optlabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.optlabel)
         # Placement du bouton dans la fenêtre
         openFileButton.place(x=20, y=30)
         # Configure le bouton
         openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
-        # Cadre pour entrer le lien
-        YtLink = LabelFrame(self.fen, text=" Lien Youtube ou SoundCloud de la musique à convertir ", padx=10, pady=10)
-        # Placement du cadre dans la fenêtre
-        YtLink.place(x=25, y=100)
-        # Configure le cadre
-        YtLink.configure(background='#202225', foreground="#b6b9be")
-        # Une Entry permet à l'utilisateur de rentrer du texte
-        self.Link = Entry(YtLink, width=50)
-        self.Link.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
-        # Inclusion du champ d'entrée dans le cadre
-        self.Link.pack()
-
-
+        # Permet de changer le texte contenu dans le bouton
+        self.dlytlabel = Message(msg=StringVar(), text={'fr': [" Télécharger "], 'en': [" Download "]}, actualLanguage=self.langue)
         # Bouton "Télécharger" qui appelle downloadMusic au clic
-        dlYtButton = Button(self.fen, text=" Télécharger ", command=self.downloadMusic)
+        dlYtButton = Button(self.fen, textvariable=self.dlytlabel.msg, command=self.downloadMusic)
+        # Affiche le texte par défaut
+        self.dlytlabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.dlytlabel)
         # Placement du cadre dans la fenêtre
         dlYtButton.place(x=25, y=190)
         # Configure le bouton
         dlYtButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be", borderwidth=0, highlightthickness=0)
 
 
+        # Permet de changer le texte contenu dans le bouton
+        self.convlabel = Message(msg=StringVar(), text={'fr': [" Conversion "], 'en': [" Convert "]}, actualLanguage=self.langue)
         # Bouton "Conversion" qui appelle conversion au clic
-        convBtn = Button(self.fen, text=" Conversion ", command=self.conversion)
+        convBtn = Button(self.fen, textvariable=self.convlabel.msg, command=self.conversion)
+        # Affiche le texte par défaut
+        self.convlabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
         convBtn.place(x=150, y=190)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+        # Bouton "Fr / En" qui appelle switchL au clic
+        lbtn = Button(self.fen, text=" Fr / En ", command=self.switchL)
+        # Placement du cadre dans la fenêtre
+        lbtn.place(x=300, y=30)
+        # Configure le bouton
+        lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Curseur du gain de volume
@@ -466,19 +622,35 @@ class Inteface:
 
 
         # Le lien vers le fichier de sauvegarde
-        self.saveLink = self.getSaveLink()
+        if not self.saveLink:
+            self.saveLink = self.getSaveLink()
+
+
+    def getParam(self):
+        if self.ParamFile in os.listdir():
+            f = json.load(open(self.ParamFile))
+            return f["OutputFile"], f['Language']
+        else:
+            return None, 'fr'
+
+
+    def switchL(self):
+        self.langue = 'en' if self.langue == 'fr' else 'fr'
+        for l in self.alltxtObject["Stringvar"]:
+            l.switchLang(self.langue)
+            l.update()
+        for l in self.alltxtObject['LabelFrame']:
+            l[1].switchLang(self.langue)
+            l[0].configure(text=l[1].getTxt())
 
 
     def getSaveLink(self):
-        if self.ParamFile in os.listdir():
-            return json.load(open(self.ParamFile))["OutputFile"]
+        path = easygui.diropenbox("Séléctionner un fichier de sauvegarde des musiques")
+        if path != None:
+            json.dump({"OutputFile": path, 'Language': self.langue}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
         else:
-            path = easygui.diropenbox("Séléctionner un fichier de sauvegarde des musiques")
-            if path != None:
-                json.dump({"OutputFile": path}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
-            else:
-                path = './Music'
-            return path
+            path = './Music'
+        return path
 
 
     def downloadMusic(self):

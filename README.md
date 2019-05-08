@@ -30,12 +30,12 @@ You can build this as an exe by installing auto-py-to-exe and runnning it.
 
 *Don't forget to add ffmpeg.exe and youre icon to make it work*
 
-## Built With
+## Built with he following tools
 
 * [FFMPEG](https://ffmpeg.org/) - The Sound converter
-* [Ryan Linnit](https://github.com/linnit/Soundcloud-Downloader/blob/master/soundcloud-downloader.py) - The SoundCloud Downloader
+* [Ryan Linnit](https://github.com/linnit/Soundcloud-Downloader/blob/master/soundcloud-downloader.py) - The SoundCloud Downloader Creator
 
 
 ## Authors
 
-* **Maxime ROUCHER** - *Initial work* - [Maxime Roucher](https://github.com/maximeroucher)
+* [**Maxime Roucher**](https://github.com/maximeroucher) - *Initial work*
