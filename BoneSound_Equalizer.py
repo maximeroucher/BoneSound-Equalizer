@@ -2,7 +2,7 @@
 # ---------- Import -------------------------------------------------------------------------------
 #
 
-
+from __future__ import unicode_literals
 import contextlib
 import math
 import os
@@ -21,6 +21,7 @@ import requests
 import youtube_dl
 from lxml import etree
 from pydub import AudioSegment
+import subprocess
 
 
 #
@@ -104,19 +105,19 @@ class SoundCloudDownloader(Thread):
         self.msg.set("Recherche du morceau")
         # Récupère le stream de la musique
         stream_url = self.get_stream_url(self.song_id)
-        self.msg.set(f"Téléchargement de {self.title} au format wav")
+        self.msg.set(f"Téléchargement de {self.title} au format mp3")
         # Télécharge la musique
-        self.download_file(stream_url, f"./Music/{self.title}.wav")
+        self.download_file(stream_url, f"./Music/{self.title}.mp3")
         # Change le message
         self.msg.set("Aucune opération actuellement")
 
 
 #
-# ---------- Classe WavEqualizer ------------------------------------------------------------------
+# ---------- Classe Equalizer ------------------------------------------------------------------
 #
 
 
-class WavEqualizer(Thread):
+class Equalizer(Thread):
 
     def __init__(self, filename, nbRepetition, progress, msg, gain):
         """ Transforme la musique pour le casque
@@ -128,11 +129,11 @@ class WavEqualizer(Thread):
         self.upperFrequency = 450
         # Fréquence au  dessus de laquelle, les fréquences sont descendus de 6 dB
         self.lowerFrequency = 9000
-        # Nom du fichier à transformer
-        self.filename = filename
+        # Nom du fichier à transformer (déjà en wav)
+        self.filename = self.get_song(filename)
         # Nom de fichier en sortie
-        ext = filename.split("\\")[-1]
-        self.outname = f'./Music/out - {ext}'
+        ext = filename.split("\\")[-1].split('.')[0]
+        self.outname = f'./Music/out - {ext}.wav'
         # Barre de progression de la fenêtre
         self.progress = progress
         # Message de la fenêtre
@@ -141,6 +142,15 @@ class WavEqualizer(Thread):
         self.nbRepetition = nbRepetition
         # Le gain à appliquer à la musique
         self.gain = gain
+
+
+    def get_song(self, path):
+        if not path.endswith(".wav"):
+            ext = path.split("\\")[-1].split('.')[0]
+            outname = f'./Music/{ext}.wav'
+            subprocess.call(['ffmpeg', '-i', path, outname])
+            return os.path.abspath(outname)
+        return path
 
 
     def f(self, x):
@@ -165,7 +175,7 @@ class WavEqualizer(Thread):
         # Change le message de la fenêtre
         self.msg.set('Modification')
         # Ouvre le fichier à transformer
-        song = AudioSegment.from_file(self.filename)
+        song = AudioSegment.from_wav(self.filename)
         # Change la barre de progression de la fenêtre
         self.progress['value'] = x / max_value * 100
         for _ in range(self.nbRepetition):
@@ -266,7 +276,7 @@ class YoutubeDownloader(Thread):
             # Crée le fichier
             os.makedirs("Music")
         # Si la musique n'a pas déjà été téléchargé
-        if not f"{self.name}.mp3" in os.listdir("./Music/"):
+        if not f"{self.name}.wav" in os.listdir("./Music/"):
             # Change le message de la fenêtre
             self.msg.set(f"Télécharge : {self.name} au format wav")
             # Télécharge la musique avec les options définis précédemment
@@ -484,7 +494,7 @@ class Inteface:
                     # Télécharge le lien avec le Téléchargeur SoundCloud
                     SoundCloudDownloader(link, name, sid, self.progressbar, self.msg).start()
                     # Ajoute le fichier au fichiers à convertir
-                    self.files.append(os.path.abspath(f'./Music/{name}.wav'))
+                    self.files.append(os.path.abspath(f'./Music/{name}.mp3'))
                     # Affiche le fichier dans la liste des fichiers à convertir
                     self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
                 # Si le lien un lien Youtube
@@ -526,7 +536,7 @@ class Inteface:
             gain = self.volumeGain.get()
             self.volumeGain.set(10)
             # lance l'equalizer
-            WavEqualizer(music, self.tags[musictype], self.progressbar, self.msg, gain).start()
+            Equalizer(music, self.tags[musictype], self.progressbar, self.msg, gain).start()
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
@@ -546,8 +556,9 @@ class Inteface:
         f = easygui.fileopenbox()
         if f:
             # Si le fichier est un fichier wav est n'est pas déjà dans la liste
-            if f.endswith(".wav") and f not in self.files:
+            if f[-4:] in [".wav", ".mp3"] and f not in self.files:
                 # Ajoute le fichier à la liste des fichiers à convertir
+                print(f)
                 self.files.append(f)
                 # Enléve ce qui précede le nom du fichier pour plus de compréhesion de l'utilisateur
                 if "\\" in f:
