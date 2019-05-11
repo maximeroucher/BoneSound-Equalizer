@@ -10,6 +10,8 @@ You can download it from [here](https://ffmpeg.org/).
 
 ### Folder Structure
 
+**image/** : the location of the image used in the programme. _If you want to change an image, named it with the name of the one you want to change_
+
 ### App
 
 Preview:
