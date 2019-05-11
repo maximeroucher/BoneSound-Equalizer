@@ -2,10 +2,12 @@
 # ---------- Import -------------------------------------------------------------------------------
 #
 
+
 from __future__ import unicode_literals
 
 import contextlib
 import json
+import shutil
 import math
 import os
 import re
@@ -14,7 +16,7 @@ import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox, PhotoImage
+from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox
 from tkinter.ttk import Progressbar, Radiobutton, Style
 from urllib.request import urlretrieve
 
@@ -23,8 +25,8 @@ import numpy as np
 import requests
 import youtube_dl
 from lxml import etree
-from pydub import AudioSegment
 from PIL import Image, ImageTk
+from pydub import AudioSegment
 
 
 #
@@ -117,20 +119,99 @@ class ProgressBar():
 
 
 #
+# ---------- Classe SpotifyDownloader ----------------------------------------------------------
+#
+
+
+class SpotifyDownloader(Thread):
+
+    def __init__(self, link, progress, msg, out, files, filesList):
+        """ Téléchargeur de vidéos depuis Soundcloud
+        itype : str, Tkinter.ttk.ProgressBar, Tkinter.StringVar, str(path), 2 []
+        """
+
+        Thread.__init__(self)
+        # Identifiant du client Soundcloud (A NE PAS CHANGER)
+        self.link = link
+        # Progressbar de la fenêtre
+        self.progress = progress
+        # Message de la fenêtre
+        self.msg = msg
+        # Le dossier d'enregistrement de la musique
+        self.out = out
+        # La liste des fichiers à modifié
+        self.files = files
+        # La liste visible des fichiers
+        self.filesList = filesList
+
+
+    def moveFile(self, filepath):
+        """ Déplace un fichier vers le dossier donné
+        itype : str(path)
+        """
+        # Le nom du fichier
+        name = os.path.basename(filepath)
+        # Déplace le fichier
+        shutil.move(filepath, self.out + "\\" + name)
+
+
+    def run(self):
+        """ Télécharge la musique
+        """
+        # Change le message
+        self.msg.changeMsg(2)
+        self.msg.update()
+        # Regarde les fichiers présent dans le dossier Music de l'ordinateur
+        files = os.listdir(os.path.expanduser("~/Music"))
+        # Démare la barre de progression
+        self.progress['value'] = 10
+        # Change le message
+        self.msg.changeMsg(10)
+        self.msg.update()
+        # Télécharge la musique qui va aller dans le dossier Music
+        os.system(f"spotdl --song {self.link}")
+        # Change la barre de progression
+        self.progress['value'] = 90
+        # Change le message
+        self.msg.changeMsg(5)
+        self.msg.update()
+        # Regarde les fichiers du dossier Music
+        afterfiles = os.listdir(os.path.expanduser("~/Music"))
+        # Trouve le nom du fichier qui à été ajouté
+        name = [x for x in afterfiles if x not in files][0]
+        # Récupère le chemin du fichier
+        music = os.path.expanduser("~/Music") + "\\" + name
+        # Change la barre de progression
+        self.progress['value'] = 100
+        # Déplace le fichier vers le dossier souhaité
+        self.moveFile(music)
+        # Ajoute le fichier au fichiers à convertir
+        self.files.append(os.path.abspath(f'{self.out}/{name}'))
+        # Affiche le fichier dans la liste des fichiers à convertir
+        self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
+        # Change la barre de progression
+        self.progress['value'] = 0
+        # Change le message
+        self.msg.changeMsg(0)
+        self.msg.update()
+
+
+#
 # ---------- Classe SoundCloudDownloader ----------------------------------------------------------
 #
 
 
 class SoundCloudDownloader(Thread):
 
-    def __init__(self, url, name, sid, progress, msg, out):
+    def __init__(self, url, name, sid, progress, msg, out, client_id):
         """ Téléchargeur de vidéos depuis Soundcloud
         itype : 3 str, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
         # Code source : https://github.com/linnit/Soundcloud-Downloader/blob/master/soundcloud-downloader.py
         Thread.__init__(self)
+        assert client_id == None
         # Identifiant du client Soundcloud (A NE PAS CHANGER)
-        self.client_id = "NmW1FlPaiL94ueEu7oziOWjYEzZzQDcK"
+        self.client_id = client_id
         # Lien de la musique
         self.url = url
         # Progressbar de la fenêtre
@@ -233,18 +314,6 @@ class Equalizer(Thread):
             return os.path.abspath(outname)
         # Sinon, retourne le chemin sans modification
         return path
-
-
-    def f(self, x):
-        """ Fonction de transformation
-        itype : float
-        rtype : float
-        """
-        coefficients = [-52.1243, 0.228166, -3.56842e-4, 3.03014e-7, -1.61768e-10, 5.83724e-14, -1.48283e-17,
-                        2.71372e-21, -3.61674e-25, 3.51071e-29, -2.45373e-33, 1.20192e-37, -3.91326e-42, 7.60244e-47, -6.66608e-52]
-        if x >= 240 and x < 15000:
-            return sum([coefficients[z] * x ** z for z in range(15)])
-        return -15
 
 
     def run(self):
@@ -400,7 +469,7 @@ class Inteface:
         # Change le titre de la fenêtre
         self.fen.title("BoneSound Equalizer")
         # Change l'icone de la fenêtre
-        self.fen.iconbitmap(default='./BONESOUND.ico')
+        self.fen.iconbitmap(default='./image/icon.ico')
         # Change la couleur de l'arrière plan
         self.fen.configure(background='#202225')
         # Le style d'la'pplication
@@ -408,15 +477,15 @@ class Inteface:
         # Initailisation par défaut
         style.theme_use('alt')
         # Le nom du fihier avec les paramètres
-        self.ParamFile = "saveLink.json"
+        self.ParamFile = "settings.json"
         # Le lien de sauvegarde et la langue de l'application
-        self.saveLink, self.langue = self.getParam()
+        self.saveLink, self.langue, self.client_id = self.getParam()
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
         # Drapeau Français pour le boutton
-        self.Fr = ImageTk.PhotoImage(Image.open('Fr.png').resize((30, 30)))
+        self.Fr = ImageTk.PhotoImage(Image.open('./image/Fr.png').resize((30, 30)))
         # Drapeau Français pour le boutton
-        self.En = ImageTk.PhotoImage(Image.open('En.png').resize((30, 30)))
+        self.En = ImageTk.PhotoImage(Image.open('./image/En.png').resize((30, 30)))
         # Change l'icone au changement de langue
         self.FlagDict = {'fr': [self.Fr, 'left'], 'en': [self.En, 'right']}
 
@@ -514,11 +583,13 @@ class Inteface:
             ["Aucune opération actuellement", "Fin du téléchargement", "Recherche du morceau",
              "Téléchargement de {} au format mp3", "Modification", "Sauvegarde",
              "Fin du téléchargement de {}", "Fin du téléchargement éstimé dans {}",
-             "Télécharge: {} au format wav", "La musique à déjà été enregistrée"],
+             "Télécharge: {} au format wav", "La musique à déjà été enregistrée",
+             "Téléchargement"],
             'en':
             ["No operation currently", "End of the download", "Search for the song",
              "Downloading of {} at mp3 format", "Changing", "Saving", "End of the download of",
-             "End estimated in {}", "Download: {} in wav format", "The song has already been downloaded"]}
+             "End estimated in {}", "Download: {} in wav format", "The song has already been downloaded",
+             "Downloading"]}
         # Permet de changer le texte contenu dans le label
         self.msg = Message(msg=StringVar(), text=allMsgPossible, actualLanguage=self.langue)
         # Affiche le texte par défaut
@@ -548,7 +619,7 @@ class Inteface:
         # Initialisation de la saisie de texte
 
         # Permet de changer le texte contenu dans le cadre
-        self.ytlabel = Message(text={'fr': [" Lien Youtube ou SoundCloud de la musique à convertir "], 'en': [" Youtube or SoundCloud link of the music to convert "]}, actualLanguage=self.langue)
+        self.ytlabel = Message(text={'fr': [" Lien Youtube, SoundCloud ou Spotify de la musique à convertir "], 'en': [" Youtube, SoundCloud or Spotify link of the music to convert "]}, actualLanguage=self.langue)
         # Cadre pour entrer le lien
         self.YtLink = LabelFrame(self.fen, text=self.ytlabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
@@ -558,7 +629,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['LabelFrame'].append([self.YtLink, self.ytlabel])
         # Une Entry permet à l'utilisateur de rentrer du texte
-        self.Link = Entry(self.YtLink, width=50)
+        self.Link = Entry(self.YtLink, width=60)
         # Configure l'affichage de la saisie
         self.Link.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Inclusion du champ d'entrée dans le cadre
@@ -636,9 +707,9 @@ class Inteface:
     def getParam(self):
         if self.ParamFile in os.listdir():
             f = json.load(open(self.ParamFile))
-            return f["OutputFile"], f['Language']
+            return f["OutputFile"], f['Language'], f['Client_id']
         else:
-            return None, 'fr'
+            return None, 'fr', None
 
 
     def switchL(self):
@@ -716,7 +787,7 @@ class Inteface:
                     # Récupère l'identifiant de la musique
                     sid = get_sid(page)
                     # Télécharge le lien avec le Téléchargeur SoundCloud
-                    SoundCloudDownloader(link, name, sid, self.progressbar, self.msg, self.saveLink).start()
+                    SoundCloudDownloader(link, name, sid, self.progressbar, self.msg, self.saveLink, self.client_id).start()
                     # Ajoute le fichier au fichiers à convertir
                     self.files.append(os.path.abspath(f'{self.saveLink}/{name}.mp3'))
                     # Affiche le fichier dans la liste des fichiers à convertir
@@ -731,6 +802,8 @@ class Inteface:
                     self.files.append(os.path.abspath(f'{self.saveLink}/{name}.wav'))
                     # Affiche le fichier dans la liste des fichiers à convertir
                     self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
+                elif 'spotify' in link:
+                    SpotifyDownloader(link, self.progressbar, self.msg, self.saveLink, self.files, self.filesList).start()
                 # Si la lien n'est pas correct
                 else:
                     # Pop-up d'erreur
@@ -808,5 +881,5 @@ class Inteface:
 # ---------- Test ----------------------------------------------------------------------
 #
 
-
-Inteface().run()
+if __name__ == "__main__":
+    Inteface().run()
