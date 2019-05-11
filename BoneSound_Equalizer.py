@@ -14,7 +14,7 @@ import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox
+from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox, PhotoImage
 from tkinter.ttk import Progressbar, Radiobutton, Style
 from urllib.request import urlretrieve
 
@@ -24,6 +24,7 @@ import requests
 import youtube_dl
 from lxml import etree
 from pydub import AudioSegment
+from PIL import Image, ImageTk
 
 
 #
@@ -412,6 +413,12 @@ class Inteface:
         self.saveLink, self.langue = self.getParam()
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
+        # Drapeau Français pour le boutton
+        self.Fr = ImageTk.PhotoImage(Image.open('Fr.png').resize((30, 30)))
+        # Drapeau Français pour le boutton
+        self.En = ImageTk.PhotoImage(Image.open('En.png').resize((30, 30)))
+        # Change l'icone au changement de langue
+        self.FlagDict = {'fr': [self.Fr, 'left'], 'en': [self.En, 'right']}
 
 
         # Initialisation des variables
@@ -473,7 +480,7 @@ class Inteface:
             # Permet de changer le texte contenu du texte
             m = Message(text={'fr': [fr], 'en': [en]}, actualLanguage=self.langue)
             # text est le message écrit à côté du bouton, value est la valeur que le bouton donne à self.MusicType quand il est séléctionné (x + 1 car 0 n'est pas admis)
-            rdb = Radiobutton(self.MusicTags, text=m.getTxt(), value=x + 1, variable=self.musicType)
+            rdb = Radiobutton(self.MusicTags, text=m.getTxt(), value=x + 1, variable=self.musicType, width=30)
             # Ajoute à la liste des objets qui peuvent changer de texte
             self.alltxtObject['LabelFrame'].append([rdb, m])
             # Le nom du bouton
@@ -482,9 +489,9 @@ class Inteface:
             style.configure(style_name, foreground="#b6b9be", background='#202225', indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
             # Précise les couleurs en fonction des états du bouton
             style.map(style_name,
-                    foreground=[('disabled', "#b6b9be"), ('pressed', "#FAA61A"), ('active', "#FAA61A")],
+                      foreground=[('disabled', "#b6b9be"), ('pressed', "#6580f1"), ('active', "#6580f1")],
                       background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')],
-                      indicatorcolor=[('selected', "#FAA61A"), ('pressed', "#FAA61A")])
+                      indicatorcolor=[('selected', "#6580f1"), ('pressed', "#6580f1")])
             # Inclusion du bouton
             rdb.pack()
 
@@ -529,7 +536,7 @@ class Inteface:
         # Charge un style par défaut
         s.theme_use('alt')
         # Configure le style
-        s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background='#8d93fa')
+        s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background='#6580f1')
         # Barre de progression qui suit l'évolution des différentes opérations de l'application
         self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
         # La valeur maximale de la barre est 100 (100%)
@@ -563,13 +570,13 @@ class Inteface:
         # Permet de changer le texte contenu dans le bouton
         self.optlabel = Message(msg=StringVar(), text={'fr': [" Ouvrir un fichier "], 'en': [" Open a file "]}, actualLanguage=self.langue)
         # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        openFileButton = Button(self.fen, textvariable=self.optlabel.msg, command=self.openExplorateur)
+        openFileButton = Button(self.fen, textvariable=self.optlabel.msg, command=self.openExplorateur, width=15, height=2)
         # Affiche le texte par défaut
         self.optlabel.update()
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.optlabel)
         # Placement du bouton dans la fenêtre
-        openFileButton.place(x=20, y=30)
+        openFileButton.place(x=25, y=30)
         # Configure le bouton
         openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -577,7 +584,7 @@ class Inteface:
         # Permet de changer le texte contenu dans le bouton
         self.dlytlabel = Message(msg=StringVar(), text={'fr': [" Télécharger "], 'en': [" Download "]}, actualLanguage=self.langue)
         # Bouton "Télécharger" qui appelle downloadMusic au clic
-        dlYtButton = Button(self.fen, textvariable=self.dlytlabel.msg, command=self.downloadMusic)
+        dlYtButton = Button(self.fen, textvariable=self.dlytlabel.msg, command=self.downloadMusic, width=15, height=2)
         # Affiche le texte par défaut
         self.dlytlabel.update()
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -591,23 +598,23 @@ class Inteface:
         # Permet de changer le texte contenu dans le bouton
         self.convlabel = Message(msg=StringVar(), text={'fr': [" Conversion "], 'en': [" Convert "]}, actualLanguage=self.langue)
         # Bouton "Conversion" qui appelle conversion au clic
-        convBtn = Button(self.fen, textvariable=self.convlabel.msg, command=self.conversion)
+        convBtn = Button(self.fen, textvariable=self.convlabel.msg, command=self.conversion, width=15, height=2)
         # Affiche le texte par défaut
         self.convlabel.update()
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
-        convBtn.place(x=150, y=190)
+        convBtn.place(x=190, y=190)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Bouton "Fr / En" qui appelle switchL au clic
-        lbtn = Button(self.fen, text=" Fr / En ", command=self.switchL)
+        self.lbtn = Button(self.fen, text=" Fr / En ", image=self.Fr, compound="left", command=self.switchL, width=100, height=40, justify='left')
         # Placement du cadre dans la fenêtre
-        lbtn.place(x=300, y=30)
+        self.lbtn.place(x=300, y=30)
         # Configure le bouton
-        lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Curseur du gain de volume
@@ -626,11 +633,6 @@ class Inteface:
         scale.pack()
 
 
-        # Le lien vers le fichier de sauvegarde
-        if not self.saveLink:
-            self.saveLink = self.getSaveLink()
-
-
     def getParam(self):
         if self.ParamFile in os.listdir():
             f = json.load(open(self.ParamFile))
@@ -647,6 +649,8 @@ class Inteface:
         for l in self.alltxtObject['LabelFrame']:
             l[1].switchLang(self.langue)
             l[0].configure(text=l[1].getTxt())
+        flag, pos = self.FlagDict[self.langue]
+        self.lbtn.configure(image=flag, compound=pos, justify=pos)
 
 
     def getSaveLink(self):
@@ -661,6 +665,9 @@ class Inteface:
     def downloadMusic(self):
         """ Récupère le lien et télécharge si le lien est correct
         """
+        # Le lien vers le fichier de sauvegarde
+        if not self.saveLink:
+            self.saveLink = self.getSaveLink()
         # Récupère ce que Link contient
         link = self.Link.get().split("&")[0]
         # Si Link contenait quelque chose
@@ -741,6 +748,9 @@ class Inteface:
     def conversion(self):
         """ Lance la conversion
         """
+        # Le lien vers le fichier de sauvegarde
+        if not self.saveLink:
+            self.saveLink = self.getSaveLink()
         # Gestion d'erreur
         try:
             # Récupère la première musique de la liste
