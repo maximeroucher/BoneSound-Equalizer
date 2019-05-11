@@ -483,9 +483,9 @@ class Inteface:
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
         # Drapeau Français pour le boutton
-        self.Fr = ImageTk.PhotoImage(Image.open('./image/Fr.png').resize((30, 30)))
+        self.Fr = ImageTk.PhotoImage(Image.open('./image/Fr.png').resize((35, 35)))
         # Drapeau Français pour le boutton
-        self.En = ImageTk.PhotoImage(Image.open('./image/En.png').resize((30, 30)))
+        self.En = ImageTk.PhotoImage(Image.open('./image/En.png').resize((35, 35)))
         # Change l'icone au changement de langue
         self.FlagDict = {'fr': [self.Fr, 'left'], 'en': [self.En, 'right']}
 
