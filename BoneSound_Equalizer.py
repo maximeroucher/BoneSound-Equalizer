@@ -16,7 +16,7 @@ import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox, Toplevel
+from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox
 from tkinter.ttk import Progressbar, Radiobutton, Style
 from urllib.request import urlretrieve
 
