@@ -10,7 +10,9 @@ You can download it from [here](https://ffmpeg.org/).
 
 ### Folder Structure
 
-**image/** : the location of the image used in the programme. _If you want to change an image, named it with the name of the one you want to change_
+**image/** : the location of the image used in the programme.
+
+_If you want to change an image, named it with the name of the one you want to change_
 
 ### App Preview
 
@@ -18,7 +20,7 @@ You can download it from [here](https://ffmpeg.org/).
 
 ### Installing
 
-You will need to easygui, requests, youtube_dl, lxml and pydub libraries to be installed.
+You will need to easygui, requests, youtube_dl, lxml, pydub, spotdl and Pillow libraries to be installed.
 
 To do so, just run on cmd:
 
