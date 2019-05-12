@@ -7,22 +7,23 @@ from __future__ import unicode_literals
 
 import contextlib
 import json
-import shutil
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox
+from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, messagebox, Toplevel
 from tkinter.ttk import Progressbar, Radiobutton, Style
 from urllib.request import urlretrieve
 
 import easygui
 import numpy as np
 import requests
+import spotdl
 import youtube_dl
 from lxml import etree
 from PIL import Image, ImageTk
@@ -38,7 +39,7 @@ class Message():
 
     def __init__(self, text, actualLanguage, addon="", msg=None):
         """ Permet de changer le texte d'un Label, LabelFrame ou Button même si ce dernier est controllé par un thread
-        itype : dict {fr: [], en:[]}, 'fr' / 'en', str, tkinter.StringVar
+        itype : dict {fr: [], en:[]}, 'fr' / 'en', str, tkinter.StringVar()
         """
         # Le StringVar perrmet de changer les labels et les bouttons
         self.msg = msg
@@ -94,7 +95,7 @@ class ProgressBar():
 
     def __init__(self, progress, msg):
         """ Barre d'avancement, est appellé à chaque itération du téléchargement
-        itype : Tkinter.ttk.ProgressBar, Tkinter.StringVar
+        itype : Tkinter.ttk.ProgressBar, Message()
         """
         # Progressbar de la fenêtre
         self.progress = progress
@@ -112,9 +113,11 @@ class ProgressBar():
         if downloaded < total_size:
             # Change la barre
             self.progress["value"] = downloaded * 100 / total_size
+        # Sinon
         else:
             # Change le texte et la barre
             self.msg.changeMsg(1)
+            self.msg.update()
             self.progress["value"] = 0
 
 
@@ -129,7 +132,7 @@ class SpotifyDownloader(Thread):
         """ Téléchargeur de vidéos depuis Soundcloud
         itype : str, Tkinter.ttk.ProgressBar, Tkinter.StringVar, str(path), 2 []
         """
-
+        # Initialisation du Thread
         Thread.__init__(self)
         # Identifiant du client Soundcloud (A NE PAS CHANGER)
         self.link = link
@@ -207,8 +210,9 @@ class SoundCloudDownloader(Thread):
         """ Téléchargeur de vidéos depuis Soundcloud
         itype : 3 str, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
-        # Code source : https://github.com/linnit/Soundcloud-Downloader/blob/master/soundcloud-downloader.py
+        # Initialisation du Thread
         Thread.__init__(self)
+        # Si le client n'est pas renseigné
         assert client_id == None
         # Identifiant du client Soundcloud (A NE PAS CHANGER)
         self.client_id = client_id
@@ -448,6 +452,71 @@ class YoutubeDownloader(Thread):
 
 
 #
+# ---------- Classe PopupWindow ----------------------------------------------------------------------
+#
+
+class PopupWindow(object):
+
+    def __init__(self, master, msg, allLabel, error, errorMsg, langue):
+        """ Pop-up pour demander le nombre de filtre à appliquer
+        itype : tkinter.Tk(), Message(), 3 dict, str
+        """
+        # Fenêtre au dessus de la principale
+        self.top = Toplevel(master)
+        # Couleur de fond de la fenêtre
+        self.top.configure(background='#202225')
+        # Taille de fond de la fenêtre
+        self.top.geometry(f"300x180")
+        # Message de la fenêtre
+        self.msg = msg
+        # Cadre pour entrer le nombre
+        self.l = LabelFrame(self.top, text=self.msg.getTxt(), padx=10, pady=10)
+        # Placement du cadre
+        self.l.place(x=30, y=20)
+        # Configuration du cadre
+        self.l.configure(background='#202225', foreground="#b6b9be")
+        # Liste pour changer la langue du texte
+        self.allLabel = allLabel
+        # Permet de changer le texte de l'application
+        self.allLabel['LabelFrame'].append([self.l, self.msg])
+        # Entry pour le nombre à entrer
+        self.e = Entry(self.l, width=35)
+        # Inclusion de l'Entry dans le cadre
+        self.e.pack()
+        # Configuration de l'Entry
+        self.e.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+        # Bouton Ok
+        self.b = Button(self.top, text='Ok', command=self.cleanup, width=15, height=2)
+        # Placement du bouton
+        self.b.place(x=90, y=110)
+        # Configuration du bouton
+        self.b.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        # Titre de la fenêtre d'erreur
+        self.error = error
+        # Titre de la fenêtre d'erreur
+        self.errorMsg = errorMsg
+        # Langue de la pop-up
+        self.langue = langue
+
+
+    def cleanup(self):
+        """ Au clic sur le bouton Ok
+        """
+        # Récupère la valeur de l'Entry
+        self.value = self.e.get()
+        # Si la valeur est un nombre
+        if self.value.isdigit():
+            # Convertit le texte en nombre
+            self.nbFilter = int(self.w.value)
+            # Détruit la fenêtre
+            self.top.destroy()
+        # Sinon
+        else:
+            # Pop-up d'erreur
+            messagebox.showerror(self.error[self.langue][0], self.errorMsg[self.langue][4])
+
+
+#
 # ---------- Classe Inteface ----------------------------------------------------------------------
 #
 
@@ -488,6 +557,19 @@ class Inteface:
         self.En = ImageTk.PhotoImage(Image.open('./image/En.png').resize((35, 35)))
         # Change l'icone au changement de langue
         self.FlagDict = {'fr': [self.Fr, 'left'], 'en': [self.En, 'right']}
+        # Si l'utilisateur rentre une valeur du nombre de filtre à appliquer
+        self.applyingPerso = False
+        # Le nombre de filtre à appliquer
+        self.nbFilter = 1
+        # Le nom des erreurs
+        self.error = {'fr': ['Erreur', "Erreur de téléchargement", "Problème", "Erreur de conversion"],
+                      'en': ["Error", "Downloading error", "Problem", "Conversion error"]}
+        # Tout les messages d'erreurs
+        self.allErrorMsg = {
+            'fr':
+            ["Lien non valide", "Pas de lien", "Il n'y a aucune musique à convertir", "Le format n'est pas correct",
+             'Il faut entrer un nombre'],
+            'en': ["Invalid link", "No link", "There is no music to convert", "The format is incorrect", 'You must enter an number']}
 
 
         # Initialisation des variables
@@ -495,7 +577,7 @@ class Inteface:
         # Fichiers actuellement ouvert dans l'application
         self.files = []
         # Différents types de musique et leur nombre de répétition du filtre associé
-        self.tags = {"Rap / Rap": 5, "Musique Classique / Classical Music": 4, "Jazz / Jazz": 6, "Hip-Hop / Hip-Hop": 7, "Rock / Rock": 8, "Métal / Metal": 9, "RnB / RnB": 10, "Pop  / Pop": 3, "Blues / Blues": 1}
+        self.tags = {"A capella / A cappella": 2, "Chanson française / French chanson": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
         # Type de musique séléctionné (IntVar permet de modifier la valeru des Radioboutons en le modifiant)
@@ -535,7 +617,7 @@ class Inteface:
         # Cadre contenant la liste
         self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=75, y=self.height / 2 - 50)
+        self.MusicTags.place(x=50, y=self.height / 2 - 80)
         # Configure l'affichage du cadre
         self.MusicTags.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -629,7 +711,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['LabelFrame'].append([self.YtLink, self.ytlabel])
         # Une Entry permet à l'utilisateur de rentrer du texte
-        self.Link = Entry(self.YtLink, width=60)
+        self.Link = Entry(self.YtLink, width=59)
         # Configure l'affichage de la saisie
         self.Link.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Inclusion du champ d'entrée dans le cadre
@@ -681,11 +763,25 @@ class Inteface:
 
 
         # Bouton "Fr / En" qui appelle switchL au clic
-        self.lbtn = Button(self.fen, text=" Fr / En ", image=self.Fr, compound="left", command=self.switchL, width=100, height=40, justify='left')
+        self.lbtn = Button(self.fen, text=" Fr / En ", image=self.Fr, compound="left", command=self.switchL, width=103, height=40, justify='left')
         # Placement du cadre dans la fenêtre
         self.lbtn.place(x=300, y=30)
         # Configure le bouton
         self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+        # Permet de changer le texte contenu dans le bouton
+        self.persolabel = Message(msg=StringVar(), text={'fr': [" Personaliser "], 'en': [" Personalize "]}, actualLanguage=self.langue)
+        # Bouton "Conversion" qui appelle conversion au clic
+        persoBtn = Button(self.fen, textvariable=self.persolabel.msg, command=self.popup, width=15, height=2)
+        # Affiche le texte par défaut
+        self.persolabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.persolabel)
+        # Placement du cadre dans la fenêtre
+        persoBtn.place(x=110, y=510)
+        # Configure le bouton
+        persoBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Curseur du gain de volume
@@ -704,32 +800,74 @@ class Inteface:
         scale.pack()
 
 
+    def popup(self):
+        """ Crée une pop-up pour demander le nombre de filtre à applliquer
+        """
+        # Signale l'utilisation d'une valeur personelle
+        self.applyingPerso = True
+        # Permet de changer entre les deux langues
+        self.persoMsg = Message(text={'fr': ["Entrer le nombre de filter à appliqer"], 'en': ["Enter the number of filter to apply"]}, actualLanguage=self.langue)
+        # Crée une pop-up pour demander la valeur
+        self.w = PopupWindow(self.fen, self.persoMsg, self.alltxtObject, self.error, self.allErrorMsg, self.langue)
+        # Met la fenêtre au dessus de la principale
+        self.fen.wait_window(self.w.top)
+        # Récupère le nombre entré
+        self.nbFilter = self.w.value
+
+
     def getParam(self):
+        """ Récupère les paramètres de l'application
+        rtype : str(path) / None, 'fr' / 'en', str / None
+        """
+        # Si le fichier de paramètre existe dans le dossier
         if self.ParamFile in os.listdir():
+            # Ouvre le fichier
             f = json.load(open(self.ParamFile))
+            # Retourne les paramètres
             return f["OutputFile"], f['Language'], f['Client_id']
+        # Si le fichier n'est pas dans le dossier
         else:
+            # Retourne des paramètres par défaut
             return None, 'fr', None
 
 
     def switchL(self):
+        """ Change le langue de l'application
+        """
+        # Change 'fr' en 'en' et inversement en fonction de la langue actuelle
         self.langue = 'en' if self.langue == 'fr' else 'fr'
+        # Pour chaque objet Message comportant un Stringvar
         for l in self.alltxtObject["Stringvar"]:
+            # Change le langue du message
             l.switchLang(self.langue)
+            # Change le message
             l.update()
+        # Pour chaque objet Message ne comportant pas de Stringvar
         for l in self.alltxtObject['LabelFrame']:
+            # Change le langue du message de l'objet Message
             l[1].switchLang(self.langue)
+            # Reconfigure le texte du LabelFrame
             l[0].configure(text=l[1].getTxt())
+        # Récupère le nouveau drapeau et sa position dans le bouton
         flag, pos = self.FlagDict[self.langue]
+        # Reconfigure le bouton
         self.lbtn.configure(image=flag, compound=pos, justify=pos)
 
 
     def getSaveLink(self):
+        """ Récupère le lien vers le dossier de sauvegarde des musiques
+        """
+        # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
         path = easygui.diropenbox("Séléctionner un fichier de sauvegarde des musiques")
+        # Si le chemin est renseigné
         if path != None:
-            json.dump({"OutputFile": path, 'Language': self.langue}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+            # Sauvegarde le chemin dans le fichier paramètre
+            json.dump({"OutputFile": path, 'Language': self.langue, "Client_id": self.client_id}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+        # Si le chemin n'est pas renseigné
         else:
+            # Chemin par défaut
             path = './Music'
+        # Retourne le chemin
         return path
 
 
@@ -802,20 +940,21 @@ class Inteface:
                     self.files.append(os.path.abspath(f'{self.saveLink}/{name}.wav'))
                     # Affiche le fichier dans la liste des fichiers à convertir
                     self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
+                # Si le lien est un lien Spotify
                 elif 'spotify' in link:
                     SpotifyDownloader(link, self.progressbar, self.msg, self.saveLink, self.files, self.filesList).start()
                 # Si la lien n'est pas correct
                 else:
                     # Pop-up d'erreur
-                    messagebox.showerror("Erreur de téléchargement", "Lien non valide")
+                    messagebox.showerror(self.error[self.langue][1], self.allErrorMsg[self.langue][0])
             # Si il y a une erreur dans le téléchargement
             except Exception as e:
                 # Pop-up d'erreur
-                messagebox.showerror("Erreur de téléchargement", f"{e.__class__.__name__}: {e}")
+                messagebox.showerror(self.error[self.langue][1], f"{e.__class__.__name__}: {e}")
         # Si Link ne contien rien
         else:
             # Pop-up d'erreur
-            messagebox.showwarning("Problème", "Pas de lien")
+            messagebox.showwarning(self.error[self.langue][2], self.allErrorMsg[self.langue][1])
 
 
     def conversion(self):
@@ -835,8 +974,12 @@ class Inteface:
             # Récupère la valeur du gain de volume
             gain = self.volumeGain.get()
             self.volumeGain.set(10)
+            # Prend le nombre de filtre à appliquer
+            nbRep = self.tags[musictype] if not self.applyingPerso else self.nbFilter
+            self.nbFilter = 1
+            self.applyingPerso = False
             # lance l'equalizer
-            Equalizer(music, self.tags[musictype], self.progressbar, self.msg, gain, self.saveLink).start()
+            Equalizer(music, nbRep, self.progressbar, self.msg, gain, self.saveLink).start()
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
@@ -844,11 +987,11 @@ class Inteface:
             # Si l'erreur est du au fait qu'il n'y ait pas de musique à transformer
             if name == "IndexError":
                 # Pop-up d'erreur
-                messagebox.showerror("Erreur de conversion", "Il n'y a aucune musique à convertir")
+                messagebox.showerror(self.error[self.langue][3], self.allErrorMsg[self.langue][2])
             # Si il s'agit d'une autre erreur
             else:
                 # Pop-up d'erreur
-                messagebox.showerror("Erreur de conversion", f"{name}: {e}")
+                messagebox.showerror(self.error[self.langue][3], f"{name}: {e}")
 
 
     def openExplorateur(self):
@@ -868,7 +1011,7 @@ class Inteface:
             # Sinon
             else:
                 # Pop-up d'erreur
-                messagebox.showerror("Erreur", "Le format n'est pas correct")
+                messagebox.showerror(self.error[self.langue][0], self.allErrorMsg[self.langue][3])
 
 
     def run(self):

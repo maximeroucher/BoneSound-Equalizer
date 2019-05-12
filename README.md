@@ -12,9 +12,7 @@ You can download it from [here](https://ffmpeg.org/).
 
 **image/** : the location of the image used in the programme. _If you want to change an image, named it with the name of the one you want to change_
 
-### App
-
-Preview:
+### App Preview
 
 ![Alt text](./image/Screen.png "BoneSound Equalizer")
 
@@ -51,6 +49,7 @@ _Don't forget to add ffmpeg.exe and your icon as "icon.ico" to make it work_
 - [FFMPEG](https://ffmpeg.org/) - The Sound converter
 - [Ryan Linnit](https://github.com/linnit/Soundcloud-Downloader/blob/master/soundcloud-downloader.py) - The SoundCloud Downloader
 - [youtube-dl](https://github.com/ytdl-org/youtube-dl/blob/master/README.md#readme) - The YouTube Downloader
+- [ritiek](https://github.com/ritiek/spotify-downloader) - The Spotify Dowloader
 
 ## Authors
 
