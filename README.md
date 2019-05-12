@@ -18,7 +18,7 @@ You can download it from [here](https://ffmpeg.org/).
 
 ### Installing
 
-You will need to easygui, requests, youtube_dl, lxml and pydub libraries to be installed.
+You will need to easygui, requests, youtube_dl, lxml, pydub, spotdl and Pillow libraries to be installed.
 
 To do so, just run on cmd:
 
