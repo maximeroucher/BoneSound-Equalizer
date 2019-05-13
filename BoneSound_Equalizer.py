@@ -314,7 +314,7 @@ class Equalizer(Thread):
             # Lieu de sauvgarde du fichier une fois converti en .wav
             outname = f'{self.out}/{ext}.wav'
             # Convertit le fchier en .wav
-            subprocess.call(['ffmpeg', '-i', path, outname])
+            subprocess.call(['ffmpeg', '-i', path, outname, '-y '])
             # Retourne le chemin vers la musique convertie
             return os.path.abspath(outname)
         # Sinon, retourne le chemin sans modification
@@ -498,17 +498,19 @@ class PopupWindow(object):
         self.errorMsg = errorMsg
         # Langue de la pop-up
         self.langue = langue
+        # la valeur du nombre de filtre à appliquer
+        self.value = None
 
 
     def cleanup(self):
         """ Au clic sur le bouton Ok
         """
         # Récupère la valeur de l'Entry
-        self.value = self.e.get()
+        value = self.e.get()
         # Si la valeur est un nombre
-        if self.value.isdigit():
+        if value.isdigit():
             # Convertit le texte en nombre
-            self.nbFilter = int(self.w.value)
+            self.value = int(value)
             # Détruit la fenêtre
             self.top.destroy()
         # Sinon
@@ -742,7 +744,7 @@ class Inteface:
         # Permet de changer le texte contenu dans le bouton
         self.colorlabel = Message(msg=StringVar(), text={'fr': [" Changer la couleur "], 'en': [" Change the color "]}, actualLanguage=self.langue)
         # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        colorbtn = Button(self.fen, textvariable=self.colorlabel.msg, command=self.getColor, width=15, height=2)
+        colorbtn = Button(self.fen, textvariable=self.colorlabel.msg, command=self.getColor, width=16, height=2)
         # Affiche le texte par défaut
         self.colorlabel.update()
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -781,8 +783,10 @@ class Inteface:
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
+        # La position et le drapeau à utliser
+        flag, pos = self.FlagDict[self.langue]
         # Bouton "Fr / En" qui appelle switchL au clic
-        self.lbtn = Button(self.fen, text=" Fr / En ", image=self.Fr, compound="left", command=self.switchL, width=103, height=40, justify='left')
+        self.lbtn = Button(self.fen, text=" Fr / En ", image=flag, compound=pos, command=self.switchL, width=103, height=33, justify='left')
         # Placement du cadre dans la fenêtre
         self.lbtn.place(x=300, y=30)
         # Configure le bouton
@@ -840,13 +844,17 @@ class Inteface:
         # Signale l'utilisation d'une valeur personelle
         self.applyingPerso = True
         # Permet de changer entre les deux langues
-        self.persoMsg = Message(text={'fr': ["Entrer le nombre de filter à appliqer"], 'en': ["Enter the number of filter to apply"]}, actualLanguage=self.langue)
+        self.persoMsg = Message(text={'fr': [" Entrer le nombre de filter à appliqer "], 'en': [" Enter the number of filter to apply "]}, actualLanguage=self.langue)
         # Crée une pop-up pour demander la valeur
         self.w = PopupWindow(self.fen, self.persoMsg, self.alltxtObject, self.error, self.allErrorMsg, self.langue)
         # Met la fenêtre au dessus de la principale
         self.fen.wait_window(self.w.top)
         # Récupère le nombre entré
         self.nbFilter = self.w.value
+        # Si aucun nombre n'a été entré
+        if not self.nbFilter:
+            # On n'utilise pas le filtre personalisé
+            self.applyingPerso = False
 
 
     def getParam(self):
