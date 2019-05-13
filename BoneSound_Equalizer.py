@@ -18,6 +18,7 @@ from collections import OrderedDict
 from threading import Thread
 from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox
 from tkinter.ttk import Progressbar, Radiobutton, Style
+from tkinter.colorchooser import askcolor
 from urllib.request import urlretrieve
 
 import easygui
@@ -541,7 +542,7 @@ class Inteface:
         self.fen.iconbitmap(default='./image/icon.ico')
         # Change la couleur de l'arrière plan
         self.fen.configure(background='#202225')
-        # Le style d'la'pplication
+        # Le style de l'application
         style = Style(self.fen)
         # Initailisation par défaut
         style.theme_use('alt')
@@ -551,6 +552,8 @@ class Inteface:
         self.saveLink, self.langue, self.client_id, self.color = self.getParam()
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
+        # Liste de tout les objets pouvant changer de couleur
+        self.allColorObjet = []
         # Drapeau Français pour le boutton
         self.Fr = ImageTk.PhotoImage(Image.open('./image/Fr.png').resize((35, 35)))
         # Drapeau Français pour le boutton
@@ -632,6 +635,8 @@ class Inteface:
             m = Message(text={'fr': [fr], 'en': [en]}, actualLanguage=self.langue)
             # text est le message écrit à côté du bouton, value est la valeur que le bouton donne à self.MusicType quand il est séléctionné (x + 1 car 0 n'est pas admis)
             rdb = Radiobutton(self.MusicTags, text=m.getTxt(), value=x + 1, variable=self.musicType, width=30)
+            # Ajout du Radiobouton à la liste de changement de couleur
+            self.allColorObjet.append(rdb)
             # Ajoute à la liste des objets qui peuvent changer de texte
             self.alltxtObject['LabelFrame'].append([rdb, m])
             # Le nom du bouton
@@ -735,6 +740,20 @@ class Inteface:
 
 
         # Permet de changer le texte contenu dans le bouton
+        self.colorlabel = Message(msg=StringVar(), text={'fr': [" Changer la couleur "], 'en': [" Change the color "]}, actualLanguage=self.langue)
+        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
+        colorbtn = Button(self.fen, textvariable=self.colorlabel.msg, command=self.getColor, width=15, height=2)
+        # Affiche le texte par défaut
+        self.colorlabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.colorlabel)
+        # Placement du bouton dans la fenêtre
+        colorbtn.place(x=160, y=30)
+        # Configure le bouton
+        colorbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+        # Permet de changer le texte contenu dans le bouton
         self.dlytlabel = Message(msg=StringVar(), text={'fr': [" Télécharger "], 'en': [" Download "]}, actualLanguage=self.langue)
         # Bouton "Télécharger" qui appelle downloadMusic au clic
         dlYtButton = Button(self.fen, textvariable=self.dlytlabel.msg, command=self.downloadMusic, width=15, height=2)
@@ -800,6 +819,21 @@ class Inteface:
         scale.pack()
 
 
+    def getColor(self):
+        """ Ouvre une fenêtre pour changer la couleur
+        """
+        # Ouvre la fenêtre
+        color = askcolor()
+        # Si une couleur est séléctionnée
+        if color[1]:
+            # Change la couleur
+            self.color = color[1]
+            # Sauvegarde les nouveaux paramètres
+            self.saveParam()
+            # Change la couleur des objets qui le peuvent
+            self.switchColor()
+
+
     def popup(self):
         """ Crée une pop-up pour demander le nombre de filtre à applliquer
         """
@@ -831,6 +865,39 @@ class Inteface:
             return None, 'fr', None, '#6580f1'
 
 
+    def saveParam(self):
+        """ Enregistre les paramètres
+        """
+        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Client_id": self.client_id, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+
+
+    def switchColor(self):
+        """ Change la couleur des objets qui le peuvent (la barre de progression et les radioboutons)
+        """
+        # Le style de l'application
+        style = Style(self.fen)
+        # Initailisation par défaut
+        style.theme_use('alt')
+        # Configure le style
+        style.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background=self.color)
+        # Barre de progression qui suit l'évolution des différentes opérations de l'application
+        self.progressbar.configure(style="red.Horizontal.TProgressbar")
+        # pour chaque bouton
+        for rdb in self.allColorObjet:
+            # Le nom du bouton
+            style_name = rdb.winfo_class()
+            # Configure la style du bouton
+            style.configure(style_name, foreground="#b6b9be", background='#202225',
+                            indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
+            # Précise les couleurs en fonction des états du bouton
+            style.map(style_name,
+                      foreground=[('disabled', "#b6b9be"), ('pressed', self.color), ('active', self.color)],
+                      background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')],
+                      indicatorcolor=[('selected', self.color), ('pressed', self.color)])
+            # Configure le style du bouton
+            rdb.configure(style=style_name)
+
+
     def switchL(self):
         """ Change le langue de l'application
         """
@@ -852,6 +919,7 @@ class Inteface:
         flag, pos = self.FlagDict[self.langue]
         # Reconfigure le bouton
         self.lbtn.configure(image=flag, compound=pos, justify=pos)
+        self.saveParam()
 
 
     def getSaveLink(self):
@@ -862,7 +930,8 @@ class Inteface:
         # Si le chemin est renseigné
         if path != None:
             # Sauvegarde le chemin dans le fichier paramètre
-            json.dump({"OutputFile": path, 'Language': self.langue, "Client_id": self.client_id}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+            json.dump({"OutputFile": path, 'Language': self.langue, "Client_id": self.client_id,
+                       "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
         # Si le chemin n'est pas renseigné
         else:
             # Chemin par défaut
@@ -1023,6 +1092,7 @@ class Inteface:
 #
 # ---------- Test ---------------------------------------------------------------------------------
 #
+
 
 if __name__ == "__main__":
     Inteface().run()
