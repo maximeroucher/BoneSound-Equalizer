@@ -548,7 +548,7 @@ class Inteface:
         # Le nom du fihier avec les paramètres
         self.ParamFile = "settings.json"
         # Le lien de sauvegarde et la langue de l'application
-        self.saveLink, self.langue, self.client_id = self.getParam()
+        self.saveLink, self.langue, self.client_id, self.color = self.getParam()
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
         # Drapeau Français pour le boutton
@@ -640,9 +640,9 @@ class Inteface:
             style.configure(style_name, foreground="#b6b9be", background='#202225', indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
             # Précise les couleurs en fonction des états du bouton
             style.map(style_name,
-                      foreground=[('disabled', "#b6b9be"), ('pressed', "#6580f1"), ('active', "#6580f1")],
+                      foreground=[('disabled', "#b6b9be"), ('pressed', self.color), ('active', self.color)],
                       background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')],
-                      indicatorcolor=[('selected', "#6580f1"), ('pressed', "#6580f1")])
+                      indicatorcolor=[('selected', self.color), ('pressed', self.color)])
             # Inclusion du bouton
             rdb.pack()
 
@@ -689,7 +689,7 @@ class Inteface:
         # Charge un style par défaut
         s.theme_use('alt')
         # Configure le style
-        s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background='#6580f1')
+        s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background=self.color)
         # Barre de progression qui suit l'évolution des différentes opérations de l'application
         self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
         # La valeur maximale de la barre est 100 (100%)
@@ -824,11 +824,11 @@ class Inteface:
             # Ouvre le fichier
             f = json.load(open(self.ParamFile))
             # Retourne les paramètres
-            return f["OutputFile"], f['Language'], f['Client_id']
+            return f["OutputFile"], f['Language'], f['Client_id'], f['Color']
         # Si le fichier n'est pas dans le dossier
         else:
             # Retourne des paramètres par défaut
-            return None, 'fr', None
+            return None, 'fr', None, '#6580f1'
 
 
     def switchL(self):
