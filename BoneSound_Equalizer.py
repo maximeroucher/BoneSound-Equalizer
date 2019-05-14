@@ -10,7 +10,6 @@ import json
 import math
 import os
 import re
-import shutil
 import subprocess
 import sys
 import urllib
@@ -19,14 +18,9 @@ from threading import Thread
 from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox
 from tkinter.ttk import Progressbar, Radiobutton, Style
 from tkinter.colorchooser import askcolor
-from urllib.request import urlretrieve
 
 import easygui
 import numpy as np
-import requests
-import spotdl
-import youtube_dl
-from lxml import etree
 from PIL import Image, ImageTk
 from pydub import AudioSegment
 
@@ -123,153 +117,6 @@ class ProgressBar():
 
 
 #
-# ---------- Classe SpotifyDownloader -------------------------------------------------------------
-#
-
-
-class SpotifyDownloader(Thread):
-
-    def __init__(self, link, progress, msg, out, files, filesList):
-        """ Téléchargeur de vidéos depuis Soundcloud
-        itype : str, Tkinter.ttk.ProgressBar, Tkinter.StringVar, str(path), 2 []
-        """
-        # Initialisation du Thread
-        Thread.__init__(self)
-        # Identifiant du client Soundcloud (A NE PAS CHANGER)
-        self.link = link
-        # Progressbar de la fenêtre
-        self.progress = progress
-        # Message de la fenêtre
-        self.msg = msg
-        # Le dossier d'enregistrement de la musique
-        self.out = out
-        # La liste des fichiers à modifié
-        self.files = files
-        # La liste visible des fichiers
-        self.filesList = filesList
-
-
-    def moveFile(self, filepath):
-        """ Déplace un fichier vers le dossier donné
-        itype : str(path)
-        """
-        # Le nom du fichier
-        name = os.path.basename(filepath)
-        # Déplace le fichier
-        shutil.move(filepath, self.out + "\\" + name)
-
-
-    def run(self):
-        """ Télécharge la musique
-        """
-        # Change le message
-        self.msg.changeMsg(2)
-        self.msg.update()
-        # Regarde les fichiers présent dans le dossier Music de l'ordinateur
-        files = os.listdir(os.path.expanduser("~/Music"))
-        # Démare la barre de progression
-        self.progress['value'] = 10
-        # Change le message
-        self.msg.changeMsg(10)
-        self.msg.update()
-        # Télécharge la musique qui va aller dans le dossier Music
-        os.system(f"spotdl --song {self.link}")
-        # Change la barre de progression
-        self.progress['value'] = 90
-        # Change le message
-        self.msg.changeMsg(5)
-        self.msg.update()
-        # Regarde les fichiers du dossier Music
-        afterfiles = os.listdir(os.path.expanduser("~/Music"))
-        # Trouve le nom du fichier qui à été ajouté
-        name = [x for x in afterfiles if x not in files][0]
-        # Récupère le chemin du fichier
-        music = os.path.expanduser("~/Music") + "\\" + name
-        # Change la barre de progression
-        self.progress['value'] = 100
-        # Déplace le fichier vers le dossier souhaité
-        self.moveFile(music)
-        # Ajoute le fichier au fichiers à convertir
-        self.files.append(os.path.abspath(f'{self.out}/{name}'))
-        # Affiche le fichier dans la liste des fichiers à convertir
-        self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
-        # Change la barre de progression
-        self.progress['value'] = 0
-        # Change le message
-        self.msg.changeMsg(0)
-        self.msg.update()
-
-
-#
-# ---------- Classe SoundCloudDownloader ----------------------------------------------------------
-#
-
-
-class SoundCloudDownloader(Thread):
-
-    def __init__(self, url, name, sid, progress, msg, out, client_id):
-        """ Téléchargeur de vidéos depuis Soundcloud
-        itype : 3 str, Tkinter.ttk.ProgressBar, Tkinter.StringVar
-        """
-        # Initialisation du Thread
-        Thread.__init__(self)
-        # Si le client n'est pas renseigné
-        assert client_id == None
-        # Identifiant du client Soundcloud (A NE PAS CHANGER)
-        self.client_id = client_id
-        # Lien de la musique
-        self.url = url
-        # Progressbar de la fenêtre
-        self.progress = progress
-        # Message de la fenêtre
-        self.msg = msg
-        # Identifiant de la musique
-        self.song_id = sid
-        # Nom de la musique
-        self.title = name
-        # Le dossier d'enregistrement de la musique
-        self.out = out
-
-
-    def download_file(self, url, filename):
-        """ Télécharge le fichier avec ProgressBar comme hook
-        itype : 2 str
-        """
-        urlretrieve(url, filename, ProgressBar(self.progress, self.msg))
-
-
-    def get_stream_url(self, sid):
-        """ Crée le stream de la musique
-        itype : str
-        rtype : str
-        """
-        return requests.get("https://api.soundcloud.com/i1/tracks/{0}/streams?client_id={1}".format(sid, self.client_id)).json()['http_mp3_128_url']
-
-
-    def run(self):
-        """ Télécharge la musique
-        """
-        # Change le message
-        self.msg.changeMsg(2)
-        # Update le texte
-        self.update()
-        # Récupère le stream de la musique
-        stream_url = self.get_stream_url(self.song_id)
-        # Change le message
-        self.msg.changeMsg(3)
-        # Ajoute le titre de la musique au message
-        self.msg.addPrecision(self.title)
-        # Update le texte
-        self.update()
-        # Télécharge la musique
-        self.download_file(stream_url, f"{self.out}/{self.title}.mp3")
-        # Change le message
-        self.msg.changeMsg(0)
-        # Update le texte
-        self.update()
-
-
-#
 # ---------- Classe Equalizer ---------------------------------------------------------------------
 #
 
@@ -358,98 +205,6 @@ class Equalizer(Thread):
         self.msg.changeMsg(0)
         # Change la barre de progression de la fenêtre
         self.progress['value'] = 0
-
-
-#
-# ---------- Classe YoutubeDownloader -------------------------------------------------------------
-#
-
-
-class YoutubeDownloader(Thread):
-
-    def __init__(self, url, name, progress, msg, out):
-        """ Téléchargeur de vidéos depuis youtube
-        itype : 2 str, Tkinter.ttk.ProgressBar, Tkinter.StringVar
-        """
-        # Initialisaiton du Thread
-        Thread.__init__(self)
-        # Lien de la vidéo
-        self.url = url
-        # Barre de progression de la fenêtre
-        self.progressbar = progress
-        # Message de la fenêtre
-        self.msg = msg
-        # Le dossier d'enregistrement de la musique
-        self.out = out
-        # Lieu de sauvegarde du fichier transformé
-        self.musicFolder = f'{self.out}/%(title)s.%(ext)s'
-        # Option de téléchargement de la musique
-        self.ydl_opts_Mp3 = {
-            # Meilleur format audio
-            'format': 'bestaudio/best',
-            # Sauvegarde dans un dossier musique a côté du programme
-            'outtmpl': self.musicFolder,
-            # Exportation en wav avec FFmpeg
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192'
-            }],
-            'postprocessor_args': [
-                '-ar', '16000'
-            ],
-            # Gesitionnaire de progression
-            'progress_hooks': [self.my_hook],
-            # Utilisation de FFmpeg
-            'prefer_ffmpeg': True,
-            # Suppression de la vidéo après avoir extrait la musique
-            'keepvideo': False
-        }
-        # Nom de la musique
-        self.name = name
-
-
-    def my_hook(self, d):
-        """ Getstionnaire de progression, appellé à chaque itération du téléchargement
-        itype : dict
-        """
-        # Si le téléchargement est terminé
-        if d['status'] == 'finished':
-            # Change le message est remet à 0 la barre de progression
-            file_tuple = os.path.split(os.path.abspath(d['filename']))
-            self.progressbar['value'] = 0
-            self.msg.changeMsg(6)
-            self.msg.addPrecision({file_tuple[1].split('.')[0]})
-            self.msg.update()
-        # Si le téléchargement est en cours
-        if d['status'] == 'downloading':
-            # Change le message est met à jour la barre de progression en fonction de l'avanecment du téléchargement
-            self.progressbar['value'] = d['_percent_str'].split("%")[0]
-            self.msg.changeMsg(7)
-            self.msg.addPrecision({d['_eta_str']})
-            self.msg.update()
-
-
-    def run(self):
-        """ Focntion pricipale, appellée quand .start() est appelé
-        """
-        # Si la musique n'a pas déjà été téléchargé
-        if not f"{self.name}.wav" in os.listdir(f"{self.out}/"):
-            # Change le message de la fenêtre
-            self.msg.changeMsg(8)
-            self.msg.addPrecision(self.name)
-            self.msg.update()
-            # Télécharge la musique avec les options définis précédemment
-            with youtube_dl.YoutubeDL(self.ydl_opts_Mp3) as ydl:
-                ydl.download([self.url])
-            # Change le messageg à la fin du téléchargement du fichier
-            self.msg.changeMsg(9)
-            self.msg.update()
-        # Si le fichier a déjà été téléchargé
-        else:
-            # Change le messageg de la fenêtre
-            self.msg.changeMsg(0)
-            self.msg.update()
 
 
 #
@@ -705,26 +460,6 @@ class Inteface:
         self.progressbar.pack()
 
 
-        # Initialisation de la saisie de texte
-
-        # Permet de changer le texte contenu dans le cadre
-        self.ytlabel = Message(text={'fr': [" Lien Youtube, SoundCloud ou Spotify de la musique à convertir "], 'en': [" Youtube, SoundCloud or Spotify link of the music to convert "]}, actualLanguage=self.langue)
-        # Cadre pour entrer le lien
-        self.YtLink = LabelFrame(self.fen, text=self.ytlabel.getTxt(), padx=10, pady=10)
-        # Placement du cadre dans la fenêtre
-        self.YtLink.place(x=25, y=100)
-        # Configure le cadre
-        self.YtLink.configure(background='#202225', foreground="#b6b9be")
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['LabelFrame'].append([self.YtLink, self.ytlabel])
-        # Une Entry permet à l'utilisateur de rentrer du texte
-        self.Link = Entry(self.YtLink, width=59)
-        # Configure l'affichage de la saisie
-        self.Link.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
-        # Inclusion du champ d'entrée dans le cadre
-        self.Link.pack()
-
-
         # Initialisation des boutons
 
         # Permet de changer le texte contenu dans le bouton
@@ -753,20 +488,6 @@ class Inteface:
         colorbtn.place(x=160, y=30)
         # Configure le bouton
         colorbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # Permet de changer le texte contenu dans le bouton
-        self.dlytlabel = Message(msg=StringVar(), text={'fr': [" Télécharger "], 'en': [" Download "]}, actualLanguage=self.langue)
-        # Bouton "Télécharger" qui appelle downloadMusic au clic
-        dlYtButton = Button(self.fen, textvariable=self.dlytlabel.msg, command=self.downloadMusic, width=15, height=2)
-        # Affiche le texte par défaut
-        self.dlytlabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.dlytlabel)
-        # Placement du cadre dans la fenêtre
-        dlYtButton.place(x=25, y=190)
-        # Configure le bouton
-        dlYtButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be", borderwidth=0, highlightthickness=0)
 
 
         # Permet de changer le texte contenu dans le bouton
@@ -946,92 +667,6 @@ class Inteface:
             path = './Music'
         # Retourne le chemin
         return path
-
-
-    def downloadMusic(self):
-        """ Récupère le lien et télécharge si le lien est correct
-        """
-        # Le lien vers le fichier de sauvegarde
-        if not self.saveLink:
-            self.saveLink = self.getSaveLink()
-        # Récupère ce que Link contient
-        link = self.Link.get().split("&")[0]
-        # Si Link contenait quelque chose
-        if link != "":
-            # Getsion des erreurs
-            try:
-                # Si le lien est un lien SoundCloud
-                if "soundcloud" in link:
-
-                    def clean_title(title):
-                        """ Formatage du titre de la musique
-                        itype : str
-                        rtype : str
-                        """
-                        allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789-_()$"
-                        title = ''.join(c for c in title if c in allowed)
-                        a = title.split("by")
-                        a.reverse()
-                        return ' - '.join([x.strip() for x in a])
-
-                    def get_title(html):
-                        """ Récupère le titre de la musique
-                        itype : str
-                        rtype : str
-                        """
-                        title_re = re.search(
-                            '<title>([^|]+) | Free Listening on SoundCloud</title>', html.text, re.IGNORECASE)
-                        if title_re:
-                            return clean_title(title_re.group(1))
-                        return False
-
-                    def get_sid(html):
-                        """ Récupère l'identifiant de la musique
-                        itype : str
-                        rtype : bool
-                        """
-                        id_re = re.search(r'soundcloud://sounds:(\d+)', html.text, re.IGNORECASE)
-                        if id_re:
-                            return id_re.group(1)
-                        return False
-
-                    # Ouvre la page coorespondante au lien
-                    page = requests.get(link)
-                    # Récupère le nom de la musique
-                    name = get_title(page)
-                    # Récupère l'identifiant de la musique
-                    sid = get_sid(page)
-                    # Télécharge le lien avec le Téléchargeur SoundCloud
-                    SoundCloudDownloader(link, name, sid, self.progressbar, self.msg, self.saveLink, self.client_id).start()
-                    # Ajoute le fichier au fichiers à convertir
-                    self.files.append(os.path.abspath(f'{self.saveLink}/{name}.mp3'))
-                    # Affiche le fichier dans la liste des fichiers à convertir
-                    self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
-                # Si le lien un lien Youtube
-                elif "youtube" in link:
-                    # Récupère le nom de la musique
-                    name = etree.HTML(urllib.request.urlopen(link).read()).xpath("//span[@id='eow-title']/@title")[0]
-                    # Télécharge le lien avec le Téléchargeur Youtube
-                    YoutubeDownloader(link, name, self.progressbar, self.msg, self.saveLink).start()
-                    # Ajoute le fichier au fichiers à convertir
-                    self.files.append(os.path.abspath(f'{self.saveLink}/{name}.wav'))
-                    # Affiche le fichier dans la liste des fichiers à convertir
-                    self.filesList.insert(len(self.files) - 1, self.files[-1].split("\\")[-1])
-                # Si le lien est un lien Spotify
-                elif 'spotify' in link:
-                    SpotifyDownloader(link, self.progressbar, self.msg, self.saveLink, self.files, self.filesList).start()
-                # Si la lien n'est pas correct
-                else:
-                    # Pop-up d'erreur
-                    messagebox.showerror(self.error[self.langue][1], self.allErrorMsg[self.langue][0])
-            # Si il y a une erreur dans le téléchargement
-            except Exception as e:
-                # Pop-up d'erreur
-                messagebox.showerror(self.error[self.langue][1], f"{e.__class__.__name__}: {e}")
-        # Si Link ne contien rien
-        else:
-            # Pop-up d'erreur
-            messagebox.showwarning(self.error[self.langue][2], self.allErrorMsg[self.langue][1])
 
 
     def conversion(self):
