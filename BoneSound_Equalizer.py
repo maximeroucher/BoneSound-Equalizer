@@ -306,7 +306,7 @@ class Inteface:
         # Le nom du fihier avec les paramètres
         self.ParamFile = "settings.json"
         # Le lien de sauvegarde et la langue de l'application
-        self.saveLink, self.langue, self.client_id, self.color = self.getParam()
+        self.saveLink, self.langue, self.color = self.getParam()
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
         # Liste de tout les objets pouvant changer de couleur
@@ -565,7 +565,7 @@ class Inteface:
         # Signale l'utilisation d'une valeur personelle
         self.applyingPerso = True
         # Permet de changer entre les deux langues
-        self.persoMsg = Message(text={'fr': [" Entrer le nombre de filter à appliqer "], 'en': [" Enter the number of filter to apply "]}, actualLanguage=self.langue)
+        self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre à appliquer "], 'en': [" Enter the number of filter to apply "]}, actualLanguage=self.langue)
         # Crée une pop-up pour demander la valeur
         self.w = PopupWindow(self.fen, self.persoMsg, self.alltxtObject, self.error, self.allErrorMsg, self.langue)
         # Met la fenêtre au dessus de la principale
@@ -587,17 +587,17 @@ class Inteface:
             # Ouvre le fichier
             f = json.load(open(self.ParamFile))
             # Retourne les paramètres
-            return f["OutputFile"], f['Language'], f['Client_id'], f['Color']
+            return f["OutputFile"], f['Language'], f['Color']
         # Si le fichier n'est pas dans le dossier
         else:
             # Retourne des paramètres par défaut
-            return None, 'fr', None, '#6580f1'
+            return None, 'fr', '#6580f1'
 
 
     def saveParam(self):
         """ Enregistre les paramètres
         """
-        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Client_id": self.client_id, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
 
 
     def switchColor(self):
@@ -688,7 +688,9 @@ class Inteface:
             self.volumeGain.set(10)
             # Prend le nombre de filtre à appliquer
             nbRep = self.tags[musictype] if not self.applyingPerso else self.nbFilter
+            # Reset le nombre de filtre à appliquer
             self.nbFilter = 1
+            # Remet par défaut l'utilisation du nombre de filtre personalisé
             self.applyingPerso = False
             # lance l'equalizer
             Equalizer(music, nbRep, self.progressbar, self.msg, gain, self.saveLink).start()
