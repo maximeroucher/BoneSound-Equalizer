@@ -135,6 +135,11 @@ class Equalizer(Thread):
         self.lowerFrequency = 9000
         # Le dossier d'enregistrement de la musique
         self.out = outfile
+        # Message de la fenêtre
+        self.msg = msg
+        # Change le message de la fenêtre
+        self.msg.changeMsg(4)
+        self.msg.update()
         # Nom du fichier à transformer (déjà en wav)
         self.filename = self.get_song(filename)
         # Nom de fichier en sortie
@@ -142,8 +147,6 @@ class Equalizer(Thread):
         self.outname = f'{self.out}/out - {ext}.wav'
         # Barre de progression de la fenêtre
         self.progress = progress
-        # Message de la fenêtre
-        self.msg = msg
         # Nombre de fois à appliquer le filtre
         self.nbRepetition = nbRepetition
         # Le gain à appliquer à la musique
@@ -154,14 +157,25 @@ class Equalizer(Thread):
         """ Récupère le chemin vers la musique et convertit en wav les autres formats
         itype : str (path)
         """
+        if self.out == "./Music" and not 'Music' in os.listdir():
+            os.makedirs("Music")
+        changeBack = False
         # Si la musique n'est pas en .wav
         if not path.endswith(".wav"):
+            if " " in path:
+                changeBack = True
+                path2 = "-".join(path.split(' '))
+                os.renames(path, path2)
+                path = path2
             # Récupère la nom de la musique sans l'extension
             ext = path.split("\\")[-1].split('.')[0]
             # Lieu de sauvgarde du fichier une fois converti en .wav
             outname = f'{self.out}/{ext}.wav'
             # Convertit le fchier en .wav
-            subprocess.call(['ffmpeg', '-i', path, outname, '-y '])
+            subprocess.call(f'ffmpeg -y -i {path} -vn {outname}')
+            if changeBack:
+                os.renames(path," ".join(path.split("-")))
+                os.renames(outname, " ".join(outname.split("-")))
             # Retourne le chemin vers la musique convertie
             return os.path.abspath(outname)
         # Sinon, retourne le chemin sans modification
@@ -175,8 +189,6 @@ class Equalizer(Thread):
         max_value = 2 * self.nbRepetition + 2
         # Progression de la barre
         x = 1
-        # Change le message de la fenêtre
-        self.msg.changeMsg(4)
         # Ouvre le fichier à transformer
         song = AudioSegment.from_wav(self.filename)
         # Change la barre de progression de la fenêtre
@@ -197,12 +209,14 @@ class Equalizer(Thread):
         self.progress['value'] = x / max_value * 100
         # Change le message de la fenêtre
         self.msg.changeMsg(5)
+        self.msg.update()
         # Augmente le volume pour compenser les filtres
         song = song + self.gain
         # Exporte le fichier
         song.export(self.outname, format="wav")
         # Change le message de la fenêtre
         self.msg.changeMsg(0)
+        self.msg.update()
         # Change la barre de progression de la fenêtre
         self.progress['value'] = 0
 
@@ -330,6 +344,8 @@ class Inteface:
             ["Lien non valide", "Pas de lien", "Il n'y a aucune musique à convertir", "Le format n'est pas correct",
              'Il faut entrer un nombre'],
             'en': ["Invalid link", "No link", "There is no music to convert", "The format is incorrect", 'You must enter an number']}
+        # Ouvre l'image
+        self.image = ImageTk.PhotoImage(Image.open('./image/Image.png').resize((140, 140)))
 
 
         # Initialisation des variables
@@ -348,6 +364,12 @@ class Inteface:
         self.volumeGain = IntVar()
         # 10 Par défaut
         self.volumeGain.set(10)
+
+
+        # Image qui change de couleur
+        self.LabelImage = Label(self.fen, image=self.image, width=140, height=140, borderwidth=0, highlightthickness=0, background=self.color)
+        # Ajoute l'image à la fenêtre
+        self.LabelImage.place(x=300, y=30)
 
 
         # Initialisation de la liste des musique à convertir
@@ -377,7 +399,7 @@ class Inteface:
         # Cadre contenant la liste
         self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=50, y=self.height / 2 - 80)
+        self.MusicTags.place(x=50, y=160)
         # Configure l'affichage du cadre
         self.MusicTags.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -485,7 +507,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.colorlabel)
         # Placement du bouton dans la fenêtre
-        colorbtn.place(x=160, y=30)
+        colorbtn.place(x=170, y=30)
         # Configure le bouton
         colorbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -499,7 +521,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
-        convBtn.place(x=190, y=190)
+        convBtn.place(x=190, y=430)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -509,7 +531,7 @@ class Inteface:
         # Bouton "Fr / En" qui appelle switchL au clic
         self.lbtn = Button(self.fen, text=" Fr / En ", image=flag, compound=pos, command=self.switchL, width=103, height=33, justify='left')
         # Placement du cadre dans la fenêtre
-        self.lbtn.place(x=300, y=30)
+        self.lbtn.place(x=100, y=100)
         # Configure le bouton
         self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -523,9 +545,24 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.persolabel)
         # Placement du cadre dans la fenêtre
-        persoBtn.place(x=110, y=510)
+        persoBtn.place(x=30, y=430)
         # Configure le bouton
         persoBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+
+        # Permet de changer le texte contenu dans le bouton
+        self.folderLabel = Message(msg=StringVar(), text={'fr': [" Dossier de sortie "], 'en': [" Output folder "]}, actualLanguage=self.langue)
+        # Bouton "Conversion" qui appelle conversion au clic
+        folderbtn = Button(self.fen, textvariable=self.folderLabel.msg, command=self.getSaveLink, width=15, height=2)
+        # Affiche le texte par défaut
+        self.folderLabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.folderLabel)
+        # Placement du cadre dans la fenêtre
+        folderbtn.place(x=110, y=490)
+        # Configure le bouton
+        folderbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Curseur du gain de volume
@@ -603,6 +640,7 @@ class Inteface:
     def switchColor(self):
         """ Change la couleur des objets qui le peuvent (la barre de progression et les radioboutons)
         """
+        self.LabelImage.configure(background=self.color)
         # Le style de l'application
         style = Style(self.fen)
         # Initailisation par défaut
@@ -642,8 +680,10 @@ class Inteface:
         for l in self.alltxtObject['LabelFrame']:
             # Change le langue du message de l'objet Message
             l[1].switchLang(self.langue)
-            # Reconfigure le texte du LabelFrame
-            l[0].configure(text=l[1].getTxt())
+            try:
+                # Reconfigure le texte du LabelFrame
+                l[0].configure(text=l[1].getTxt())
+            except:pass
         # Récupère le nouveau drapeau et sa position dans le bouton
         flag, pos = self.FlagDict[self.langue]
         # Reconfigure le bouton
@@ -658,15 +698,9 @@ class Inteface:
         path = easygui.diropenbox("Séléctionner un fichier de sauvegarde des musiques")
         # Si le chemin est renseigné
         if path != None:
+            self.saveLink = path
             # Sauvegarde le chemin dans le fichier paramètre
-            json.dump({"OutputFile": path, 'Language': self.langue, "Client_id": self.client_id,
-                       "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
-        # Si le chemin n'est pas renseigné
-        else:
-            # Chemin par défaut
-            path = './Music'
-        # Retourne le chemin
-        return path
+            self.saveParam()
 
 
     def conversion(self):
@@ -715,7 +749,6 @@ class Inteface:
             # Si le fichier est un fichier wav est n'est pas déjà dans la liste
             if f[-4:] in [".wav", ".mp3"] and f not in self.files:
                 # Ajoute le fichier à la liste des fichiers à convertir
-                print(f)
                 self.files.append(f)
                 # Enléve ce qui précede le nom du fichier pour plus de compréhesion de l'utilisateur
                 if "\\" in f:
