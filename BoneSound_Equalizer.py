@@ -29,7 +29,7 @@ from pydub import AudioSegment
 # ---------- Classe Message -----------------------------------------------------------------------
 #
 
-
+# TODO: laisser le fichier si erreur, supprimer fichier sur suppr, (enlever cette fenêtre de mort)
 class Message():
 
     def __init__(self, text, actualLanguage, addon="", msg=None):
@@ -225,7 +225,7 @@ class Equalizer(Thread):
 # ---------- Classe PopupWindow -------------------------------------------------------------------
 #
 
-class PopupWindow(object):
+class PopupWindow():
 
     def __init__(self, master, msg, allLabel, error, errorMsg, langue):
         """ Pop-up pour demander le nombre de filtre à appliquer
@@ -375,7 +375,7 @@ class Inteface:
         # Initialisation de la liste des musique à convertir
 
         # Permet de changer le texte contenu dans le cadre
-        self.musicLabel = Message(text={'fr': [" Liste des musiques à convertir "], 'en': [' List of music to convert ']}, actualLanguage=self.langue)
+        self.musicLabel = Message(text={'fr': [" Liste des musiques à convertir "], 'en': [' List of musics to convert ']}, actualLanguage=self.langue)
         # Cadre contenant la liste
         self.MusicFiles = LabelFrame(self.fen, text=self.musicLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
@@ -537,7 +537,7 @@ class Inteface:
 
 
         # Permet de changer le texte contenu dans le bouton
-        self.persolabel = Message(msg=StringVar(), text={'fr': [" Personaliser "], 'en': [" Personalize "]}, actualLanguage=self.langue)
+        self.persolabel = Message(msg=StringVar(), text={'fr': [" Personnaliser "], 'en': [" Personalize "]}, actualLanguage=self.langue)
         # Bouton "Conversion" qui appelle conversion au clic
         persoBtn = Button(self.fen, textvariable=self.persolabel.msg, command=self.popup, width=15, height=2)
         # Affiche le texte par défaut
@@ -574,7 +574,7 @@ class Inteface:
         # Place le cadre dans la fenêtre
         VolumeLabel.place(x=340, y=190)
         # Création du curseur
-        scale = Scale(VolumeLabel, from_=-10, to=100, resolution=1, tickinterval=10, length=300, variable=self.volumeGain)
+        scale = Scale(VolumeLabel, from_=-10, to=20, resolution=1, tickinterval=10, length=300, variable=self.volumeGain)
         # Configure le curseur
         scale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
         # Inclusion du curseur
@@ -602,7 +602,7 @@ class Inteface:
         # Signale l'utilisation d'une valeur personelle
         self.applyingPerso = True
         # Permet de changer entre les deux langues
-        self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre à appliquer "], 'en': [" Enter the number of filter to apply "]}, actualLanguage=self.langue)
+        self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
         # Crée une pop-up pour demander la valeur
         self.w = PopupWindow(self.fen, self.persoMsg, self.alltxtObject, self.error, self.allErrorMsg, self.langue)
         # Met la fenêtre au dessus de la principale
@@ -687,15 +687,16 @@ class Inteface:
         # Récupère le nouveau drapeau et sa position dans le bouton
         flag, pos = self.FlagDict[self.langue]
         # Reconfigure le bouton
-        self.lbtn.configure(image=flag, compound=pos, justify=pos)
+        self.lbtn.configure(image=flag, compound=pos, justify=pos)self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
         self.saveParam()
 
 
     def getSaveLink(self):
         """ Récupère le lien vers le dossier de sauvegarde des musiques
         """
+        self.msg = Message(text={'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}, actualLanguage=self.langue)
         # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
-        path = easygui.diropenbox("Séléctionner un fichier de sauvegarde des musiques")
+        path = easygui.diropenbox(self.msg[self.langue][0].getTxt())
         # Si le chemin est renseigné
         if path != None:
             self.saveLink = path
@@ -719,7 +720,6 @@ class Inteface:
             musictype = list(self.tags.keys())[int(self.musicType.get()) - 1]
             # Récupère la valeur du gain de volume
             gain = self.volumeGain.get()
-            self.volumeGain.set(10)
             # Prend le nombre de filtre à appliquer
             nbRep = self.tags[musictype] if not self.applyingPerso else self.nbFilter
             # Reset le nombre de filtre à appliquer
