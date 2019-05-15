@@ -29,7 +29,7 @@ from pydub import AudioSegment
 # ---------- Classe Message -----------------------------------------------------------------------
 #
 
-# TODO: laisser le fichier si erreur, supprimer fichier sur suppr, (enlever cette fenêtre de mort)
+
 class Message():
 
     def __init__(self, text, actualLanguage, addon="", msg=None):
@@ -123,7 +123,7 @@ class ProgressBar():
 
 class Equalizer(Thread):
 
-    def __init__(self, filename, nbRepetition, progress, msg, gain, outfile):
+    def __init__(self, nbRepetition, progress, msg, gain, outfile, filesList, files):
         """ Transforme la musique pour le casque
         itype : str, int, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
@@ -140,6 +140,12 @@ class Equalizer(Thread):
         # Change le message de la fenêtre
         self.msg.changeMsg(4)
         self.msg.update()
+        # La liste des musiques
+        self.files = files
+        # Récupère la première musique de la liste
+        filename = self.files[0]
+        # La suppression du fichier .wav de transition
+        self.delWav = False
         # Nom du fichier à transformer (déjà en wav)
         self.filename = self.get_song(filename)
         # Nom de fichier en sortie
@@ -151,6 +157,9 @@ class Equalizer(Thread):
         self.nbRepetition = nbRepetition
         # Le gain à appliquer à la musique
         self.gain = gain
+        # La liste des musiquesà afficher
+        self.filesList = filesList
+
 
 
     def get_song(self, path):
@@ -161,7 +170,8 @@ class Equalizer(Thread):
             os.makedirs("Music")
         changeBack = False
         # Si la musique n'est pas en .wav
-        if not path.endswith(".wav"):
+        if path[-4:] != ".wav":
+            self.delWav = True
             if " " in path:
                 changeBack = True
                 path2 = "-".join(path.split(' '))
@@ -172,12 +182,15 @@ class Equalizer(Thread):
             # Lieu de sauvgarde du fichier une fois converti en .wav
             outname = f'{self.out}/{ext}.wav'
             # Convertit le fchier en .wav
+            stderr = sys.stderr
+            sys.stderr = open(os.devnull, 'w')
             subprocess.call(f'ffmpeg -y -i {path} -vn {outname}')
+            sys.stderr = stderr
             if changeBack:
-                os.renames(path," ".join(path.split("-")))
-                os.renames(outname, " ".join(outname.split("-")))
+                os.renames(path, " - ".join(" ".join(path.split("-")).split("   ")))
+                os.renames(outname, " - ".join(" ".join(outname.split("-")).split("   ")))
             # Retourne le chemin vers la musique convertie
-            return os.path.abspath(outname)
+            return os.path.abspath(" - ".join(" ".join(outname.split("-")).split("   ")))
         # Sinon, retourne le chemin sans modification
         return path
 
@@ -219,6 +232,15 @@ class Equalizer(Thread):
         self.msg.update()
         # Change la barre de progression de la fenêtre
         self.progress['value'] = 0
+        # La supprime de l'affichage
+        self.filesList.delete(0)
+        # Enlève de la liste la musique
+        self.files.pop(0)
+        # Supprime la musique wav de transition
+        if self.delWav:
+            filenametodel = "".join(self.outname.split("out - "))
+            os.remove(filenametodel)
+
 
 
 #
@@ -346,6 +368,9 @@ class Inteface:
             'en': ["Invalid link", "No link", "There is no music to convert", "The format is incorrect", 'You must enter an number']}
         # Ouvre l'image
         self.image = ImageTk.PhotoImage(Image.open('./image/Image.png').resize((140, 140)))
+        # L'élément séléctionné dans la liste des musiques à transformer
+        self.delElement = StringVar()
+
 
 
         # Initialisation des variables
@@ -363,7 +388,7 @@ class Inteface:
         # le gain de volume
         self.volumeGain = IntVar()
         # 10 Par défaut
-        self.volumeGain.set(10)
+        self.volumeGain.set(5)
 
 
         # Image qui change de couleur
@@ -399,7 +424,7 @@ class Inteface:
         # Cadre contenant la liste
         self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=50, y=160)
+        self.MusicTags.place(x=50, y=180)
         # Configure l'affichage du cadre
         self.MusicTags.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -521,7 +546,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
-        convBtn.place(x=190, y=430)
+        convBtn.place(x=190, y=450)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -531,7 +556,7 @@ class Inteface:
         # Bouton "Fr / En" qui appelle switchL au clic
         self.lbtn = Button(self.fen, text=" Fr / En ", image=flag, compound=pos, command=self.switchL, width=103, height=33, justify='left')
         # Placement du cadre dans la fenêtre
-        self.lbtn.place(x=100, y=100)
+        self.lbtn.place(x=100, y=80)
         # Configure le bouton
         self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -545,10 +570,9 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.persolabel)
         # Placement du cadre dans la fenêtre
-        persoBtn.place(x=30, y=430)
+        persoBtn.place(x=30, y=450)
         # Configure le bouton
         persoBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
 
 
         # Permet de changer le texte contenu dans le bouton
@@ -560,9 +584,23 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.folderLabel)
         # Placement du cadre dans la fenêtre
-        folderbtn.place(x=110, y=490)
+        folderbtn.place(x=110, y=500)
         # Configure le bouton
         folderbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+        # Permet de changer le texte contenu dans le bouton
+        self.supprLabel = Message(msg=StringVar(), text={'fr': [" Supprimer la musique "], 'en': [" Delete music "]}, actualLanguage=self.langue)
+        # Bouton "Suuprimer" qui appelle delMusic au clic
+        supprbtn = Button(self.fen, textvariable=self.supprLabel.msg, command=self.delMusic, width=20, height=2)
+        # Affiche le texte par défaut
+        self.supprLabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.supprLabel)
+        # Placement du cadre dans la fenêtre
+        supprbtn.place(x=80, y=132)
+        # Configure le bouton
+        supprbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Curseur du gain de volume
@@ -574,7 +612,7 @@ class Inteface:
         # Place le cadre dans la fenêtre
         VolumeLabel.place(x=340, y=190)
         # Création du curseur
-        scale = Scale(VolumeLabel, from_=-10, to=20, resolution=1, tickinterval=10, length=300, variable=self.volumeGain)
+        scale = Scale(VolumeLabel, from_=-10, to=20, resolution=1, tickinterval=3, length=300, variable=self.volumeGain)
         # Configure le curseur
         scale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
         # Inclusion du curseur
@@ -629,6 +667,18 @@ class Inteface:
         else:
             # Retourne des paramètres par défaut
             return None, 'fr', '#6580f1'
+
+
+    def delMusic(self):
+        try:
+            value = self.filesList.get(self.filesList.curselection())
+            for x in self.files:
+                if x.endswith(value):
+                    index = self.files.index(x)
+                    break
+            self.files.pop(index)
+            self.filesList.delete(index)
+        except:pass
 
 
     def saveParam(self):
@@ -687,16 +737,16 @@ class Inteface:
         # Récupère le nouveau drapeau et sa position dans le bouton
         flag, pos = self.FlagDict[self.langue]
         # Reconfigure le bouton
-        self.lbtn.configure(image=flag, compound=pos, justify=pos)self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
+        self.lbtn.configure(image=flag, compound=pos, justify=pos)
         self.saveParam()
 
 
     def getSaveLink(self):
         """ Récupère le lien vers le dossier de sauvegarde des musiques
         """
-        self.msg = Message(text={'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}, actualLanguage=self.langue)
+        self.msg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
         # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
-        path = easygui.diropenbox(self.msg[self.langue][0].getTxt())
+        path = easygui.diropenbox(self.msg[self.langue][0])
         # Si le chemin est renseigné
         if path != None:
             self.saveLink = path
@@ -712,10 +762,6 @@ class Inteface:
             self.saveLink = self.getSaveLink()
         # Gestion d'erreur
         try:
-            # Récupère la première musique de la liste
-            music = self.files.pop(0)
-            # La supprime de l'affichage
-            self.filesList.delete(0)
             # Récupère le type de musiqye séléctionné
             musictype = list(self.tags.keys())[int(self.musicType.get()) - 1]
             # Récupère la valeur du gain de volume
@@ -727,7 +773,7 @@ class Inteface:
             # Remet par défaut l'utilisation du nombre de filtre personalisé
             self.applyingPerso = False
             # lance l'equalizer
-            Equalizer(music, nbRep, self.progressbar, self.msg, gain, self.saveLink).start()
+            Equalizer(nbRep, self.progressbar, self.msg, gain, self.saveLink, self.filesList, self.files).start()
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
