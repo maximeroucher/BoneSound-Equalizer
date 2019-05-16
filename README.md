@@ -36,7 +36,7 @@ Just run BoneSound_Equailzer.py and test all commands
 
 You can build this as an exe by installing auto-py-to-exe and runnning it.
 
-_Don't forget to add ffmpeg.exe and your icon as "icon.ico" to make it work_
+_Don't forget to add ffmpeg.exe, your icon as "icon.ico" and the image folder to make it work_
 
 ## Built with following tools
 
