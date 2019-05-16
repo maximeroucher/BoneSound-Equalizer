@@ -161,32 +161,39 @@ class Equalizer(Thread):
         self.filesList = filesList
 
 
-
     def get_song(self, path):
         """ Récupère le chemin vers la musique et convertit en wav les autres formats
         itype : str (path)
         """
+        # Si le fichier n'existe pas
         if self.out == "./Music" and not 'Music' in os.listdir():
+            # Crée le fichier
             os.makedirs("Music")
+        # Changement de nom pour la commande cmd
         changeBack = False
         # Si la musique n'est pas en .wav
         if path[-4:] != ".wav":
+            # Il faut enlever le fichier wav de transition
             self.delWav = True
+            # Enleve les espaces pour éviter les problèmes de cmd
             if " " in path:
+                # Il faudra rechanger le nom
                 changeBack = True
+                # Change le nom pour éviter le problème cmd
                 path2 = "-".join(path.split(' '))
+                # Renomme le fichier
                 os.renames(path, path2)
+                # Sauvegarde le nouveau fichier
                 path = path2
             # Récupère la nom de la musique sans l'extension
             ext = path.split("\\")[-1].split('.')[0]
             # Lieu de sauvgarde du fichier une fois converti en .wav
             outname = f'{self.out}/{ext}.wav'
             # Convertit le fchier en .wav
-            stderr = sys.stderr
-            sys.stderr = open(os.devnull, 'w')
             subprocess.call(f'ffmpeg -y -i {path} -vn {outname}')
-            sys.stderr = stderr
+            # Si il faut rechanger le nom
             if changeBack:
+                # Renomme les deux fichiers
                 os.renames(path, " - ".join(" ".join(path.split("-")).split("   ")))
                 os.renames(outname, " - ".join(" ".join(outname.split("-")).split("   ")))
             # Retourne le chemin vers la musique convertie
@@ -238,9 +245,8 @@ class Equalizer(Thread):
         self.files.pop(0)
         # Supprime la musique wav de transition
         if self.delWav:
-            filenametodel = "".join(self.outname.split("out - "))
-            os.remove(filenametodel)
-
+            # Récupère et supprime le fichier
+            os.remove("".join(self.outname.split("out - ")))
 
 
 #
@@ -262,27 +268,27 @@ class PopupWindow():
         # Message de la fenêtre
         self.msg = msg
         # Cadre pour entrer le nombre
-        self.l = LabelFrame(self.top, text=self.msg.getTxt(), padx=10, pady=10)
+        self.lblFrame = LabelFrame(self.top, text=self.msg.getTxt(), padx=10, pady=10)
         # Placement du cadre
-        self.l.place(x=30, y=20)
+        self.lblFrame.place(x=30, y=20)
         # Configuration du cadre
-        self.l.configure(background='#202225', foreground="#b6b9be")
+        self.lblFrame.configure(background='#202225', foreground="#b6b9be")
         # Liste pour changer la langue du texte
         self.allLabel = allLabel
         # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.l, self.msg])
+        self.allLabel['LabelFrame'].append([self.lblFrame, self.msg])
         # Entry pour le nombre à entrer
-        self.e = Entry(self.l, width=35)
+        self.entry = Entry(self.lblFrame, width=35)
         # Inclusion de l'Entry dans le cadre
-        self.e.pack()
+        self.entry.pack()
         # Configuration de l'Entry
-        self.e.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+        self.entry.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Bouton Ok
-        self.b = Button(self.top, text='Ok', command=self.cleanup, width=15, height=2)
+        self.btn = Button(self.top, text='Ok', command=self.cleanup, width=15, height=2)
         # Placement du bouton
-        self.b.place(x=90, y=110)
+        self.btn.place(x=90, y=110)
         # Configuration du bouton
-        self.b.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        self.btn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
         # Titre de la fenêtre d'erreur
         self.error = error
         # Titre de la fenêtre d'erreur
@@ -297,7 +303,7 @@ class PopupWindow():
         """ Au clic sur le bouton Ok
         """
         # Récupère la valeur de l'Entry
-        value = self.e.get()
+        value = self.entry.get()
         # Si la valeur est un nombre
         if value.isdigit():
             # Convertit le texte en nombre
@@ -308,6 +314,65 @@ class PopupWindow():
         else:
             # Pop-up d'erreur
             messagebox.showerror(self.error[self.langue][0], self.errorMsg[self.langue][4])
+
+
+#
+# ---------- Classe PopupParamWindow -------------------------------------------------------------------
+#
+
+
+class PopupParamWindow():
+
+    def __init__(self, master, fen):
+        """ Pop-up pour demander le nombre de filtre à appliquer
+        itype : tkinter.Tk(), Message(), 3 dict, str
+        """
+        # Accède aux propriétés de la fenêtre
+        self.fen = fen
+        # Les objets qui change de couleur
+        self.allColorObjet = fen.allColorObjet
+        # Les objets qui change de texte
+        self.alltxtObject = fen.alltxtObject
+        # La langue de la fenêtre
+        self.langue = fen.langue
+        # Le nom de la pop-up
+        self.msg = fen.persoMsg
+        # Les drapeaux de la pop-up
+        self.FlagDict = fen.FlagDict
+        # Fenêtre au dessus de la principale
+        self.top = Toplevel(master)
+        # Couleur de fond de la fenêtre
+        self.top.configure(background='#202225')
+        # Taille de fond de la fenêtre
+        self.top.geometry(f"250x150")
+        # Change le titre de la pop-up
+        self.top.title(self.msg.getTxt())
+        # Permet de changer le texte contenu dans le bouton
+        self.colorlabel = Message(msg=StringVar(), text={'fr': [" Changer la couleur "], 'en': [" Change the color "]}, actualLanguage=self.langue)
+        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
+        colorbtn = Button(self.top, textvariable=self.colorlabel.msg, command=self.fen.getColor, width=16, height=2)
+        # Affiche le texte par défaut
+        self.colorlabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.colorlabel)
+        # Placement du bouton dans la fenêtre
+        colorbtn.place(x=70, y=25)
+        # Configure le bouton
+        colorbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        # La position et le drapeau à utliser
+        flag, pos = self.FlagDict[self.langue]
+        # Bouton "Fr / En" qui appelle switchL au clic
+        self.lbtn = Button(self.top, text=" Fr / En ", image=flag, compound=pos, command=self.fen.switchL, width=103, height=33, justify='left')
+        # Placement du cadre dans la fenêtre
+        self.lbtn.place(x=75, y=85)
+        # Configure le bouton
+        self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+    def cleanup(self):
+        """ Au clic sur le bouton Ok
+        """
+        self.top.destroy()
 
 
 #
@@ -351,6 +416,8 @@ class Inteface:
         self.Fr = ImageTk.PhotoImage(Image.open('./image/Fr.png').resize((35, 35)))
         # Drapeau Français pour le boutton
         self.En = ImageTk.PhotoImage(Image.open('./image/En.png').resize((35, 35)))
+        # Image des paramètres
+        self.ParamImg = ImageTk.PhotoImage(Image.open('./image/Param.png').resize((35, 35)))
         # Change l'icone au changement de langue
         self.FlagDict = {'fr': [self.Fr, 'left'], 'en': [self.En, 'right']}
         # Si l'utilisateur rentre une valeur du nombre de filtre à appliquer
@@ -396,6 +463,11 @@ class Inteface:
         # Ajoute l'image à la fenêtre
         self.LabelImage.place(x=300, y=30)
 
+        # Drapeau
+        flag, _ = self.FlagDict[self.langue]
+        self.lblFlag = Label(self.fen, image=flag, width=35, height=35, background='#202225')
+        self.lblFlag.place(x=950, y=600)
+
 
         # Initialisation de la liste des musique à convertir
 
@@ -424,7 +496,7 @@ class Inteface:
         # Cadre contenant la liste
         self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=50, y=180)
+        self.MusicTags.place(x=50, y=160)
         # Configure l'affichage du cadre
         self.MusicTags.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -454,6 +526,25 @@ class Inteface:
                       indicatorcolor=[('selected', self.color), ('pressed', self.color)])
             # Inclusion du bouton
             rdb.pack()
+
+
+        # Espace entre la liste et le bouton
+        lbl = Label(self.MusicTags, height=1)
+        lbl.pack()
+        lbl.configure(background="#202225")
+
+        # Permet de changer le texte contenu dans le bouton
+        self.persolabel = Message(msg=StringVar(), text={'fr': [" Personnaliser "], 'en': [" Personalize "]}, actualLanguage=self.langue)
+        # Bouton "Conversion" qui appelle conversion au clic
+        persoBtn = Button(self.MusicTags, textvariable=self.persolabel.msg, command=self.popup, width=15, height=2)
+        # Affiche le texte par défaut
+        self.persolabel.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.persolabel)
+        # Placement du cadre dans la fenêtre
+        persoBtn.pack(anchor='w')
+        # Configure le bouton
+        persoBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Initialisation de la barre de progression
@@ -509,6 +600,14 @@ class Inteface:
 
         # Initialisation des boutons
 
+        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
+        openFileButton = Button(self.fen, image=self.ParamImg, command=self.popupParam, width=35, height=35)
+        # Placement du bouton dans la fenêtre
+        openFileButton.place(x=10, y=10)
+        # Configure le bouton
+        openFileButton.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
+
+
         # Permet de changer le texte contenu dans le bouton
         self.optlabel = Message(msg=StringVar(), text={'fr': [" Ouvrir un fichier "], 'en': [" Open a file "]}, actualLanguage=self.langue)
         # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
@@ -518,23 +617,9 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.optlabel)
         # Placement du bouton dans la fenêtre
-        openFileButton.place(x=25, y=30)
+        openFileButton.place(x=110, y=90)
         # Configure le bouton
         openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # Permet de changer le texte contenu dans le bouton
-        self.colorlabel = Message(msg=StringVar(), text={'fr': [" Changer la couleur "], 'en': [" Change the color "]}, actualLanguage=self.langue)
-        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        colorbtn = Button(self.fen, textvariable=self.colorlabel.msg, command=self.getColor, width=16, height=2)
-        # Affiche le texte par défaut
-        self.colorlabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.colorlabel)
-        # Placement du bouton dans la fenêtre
-        colorbtn.place(x=170, y=30)
-        # Configure le bouton
-        colorbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Permet de changer le texte contenu dans le bouton
@@ -546,33 +631,9 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
-        convBtn.place(x=190, y=450)
+        convBtn.place(x=110, y=495)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # La position et le drapeau à utliser
-        flag, pos = self.FlagDict[self.langue]
-        # Bouton "Fr / En" qui appelle switchL au clic
-        self.lbtn = Button(self.fen, text=" Fr / En ", image=flag, compound=pos, command=self.switchL, width=103, height=33, justify='left')
-        # Placement du cadre dans la fenêtre
-        self.lbtn.place(x=100, y=80)
-        # Configure le bouton
-        self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # Permet de changer le texte contenu dans le bouton
-        self.persolabel = Message(msg=StringVar(), text={'fr': [" Personnaliser "], 'en': [" Personalize "]}, actualLanguage=self.langue)
-        # Bouton "Conversion" qui appelle conversion au clic
-        persoBtn = Button(self.fen, textvariable=self.persolabel.msg, command=self.popup, width=15, height=2)
-        # Affiche le texte par défaut
-        self.persolabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.persolabel)
-        # Placement du cadre dans la fenêtre
-        persoBtn.place(x=30, y=450)
-        # Configure le bouton
-        persoBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Permet de changer le texte contenu dans le bouton
@@ -584,7 +645,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.folderLabel)
         # Placement du cadre dans la fenêtre
-        folderbtn.place(x=110, y=500)
+        folderbtn.place(x=110, y=30)
         # Configure le bouton
         folderbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -598,9 +659,9 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.supprLabel)
         # Placement du cadre dans la fenêtre
-        supprbtn.place(x=80, y=132)
+        supprbtn.place(x=810, y=497)
         # Configure le bouton
-        supprbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        supprbtn.configure(background="#484B52", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Curseur du gain de volume
@@ -617,21 +678,6 @@ class Inteface:
         scale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
         # Inclusion du curseur
         scale.pack()
-
-
-    def getColor(self):
-        """ Ouvre une fenêtre pour changer la couleur
-        """
-        # Ouvre la fenêtre
-        color = askcolor()
-        # Si une couleur est séléctionnée
-        if color[1]:
-            # Change la couleur
-            self.color = color[1]
-            # Sauvegarde les nouveaux paramètres
-            self.saveParam()
-            # Change la couleur des objets qui le peuvent
-            self.switchColor()
 
 
     def popup(self):
@@ -653,6 +699,19 @@ class Inteface:
             self.applyingPerso = False
 
 
+    def popupParam(self):
+        """ Crée une pop-up pour demander le nombre de filtre à applliquer
+        """
+        # Signale l'utilisation d'une valeur personelle
+        self.applyingPerso = True
+        # Permet de changer entre les deux langues
+        self.persoMsg = Message(text={'fr': [" Paramètres "], 'en': [" Settings "]}, actualLanguage=self.langue)
+        # Crée une pop-up pour demander la valeur
+        self.p = PopupParamWindow(self.fen, self)
+        # Met la fenêtre au dessus de la principale
+        self.fen.wait_window(self.p.top)
+
+
     def getParam(self):
         """ Récupère les paramètres de l'application
         rtype : str(path) / None, 'fr' / 'en', str / None
@@ -667,24 +726,6 @@ class Inteface:
         else:
             # Retourne des paramètres par défaut
             return None, 'fr', '#6580f1'
-
-
-    def delMusic(self):
-        try:
-            value = self.filesList.get(self.filesList.curselection())
-            for x in self.files:
-                if x.endswith(value):
-                    index = self.files.index(x)
-                    break
-            self.files.pop(index)
-            self.filesList.delete(index)
-        except:pass
-
-
-    def saveParam(self):
-        """ Enregistre les paramètres
-        """
-        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
 
 
     def switchColor(self):
@@ -733,20 +774,57 @@ class Inteface:
             try:
                 # Reconfigure le texte du LabelFrame
                 l[0].configure(text=l[1].getTxt())
-            except:pass
+            except:
+                pass
         # Récupère le nouveau drapeau et sa position dans le bouton
         flag, pos = self.FlagDict[self.langue]
-        # Reconfigure le bouton
-        self.lbtn.configure(image=flag, compound=pos, justify=pos)
+        self.lblFlag.configure(image=flag)
+        if self.p:
+            self.p.top.title(self.persoMsg.text[self.langue][0])
+            # Reconfigure le bouton
+            self.p.lbtn.configure(image=flag, compound=pos, justify=pos)
         self.saveParam()
+
+
+    def getColor(self):
+        """ Ouvre une fenêtre pour changer la couleur
+        """
+        # Ouvre la fenêtre
+        color = askcolor()
+        # Si une couleur est séléctionnée
+        if color[1]:
+            # Change la couleur
+            self.color = color[1]
+            # Sauvegarde les nouveaux paramètres
+            self.saveParam()
+            # Change la couleur des objets qui le peuvent
+            self.switchColor()
+
+
+    def delMusic(self):
+        try:
+            value = self.filesList.get(self.filesList.curselection())
+            for x in self.files:
+                if x.endswith(value):
+                    index = self.files.index(x)
+                    break
+            self.files.pop(index)
+            self.filesList.delete(index)
+        except:pass
+
+
+    def saveParam(self):
+        """ Enregistre les paramètres
+        """
+        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
 
 
     def getSaveLink(self):
         """ Récupère le lien vers le dossier de sauvegarde des musiques
         """
-        self.msg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
+        self.openMsg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
         # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
-        path = easygui.diropenbox(self.msg[self.langue][0])
+        path = easygui.diropenbox(self.openMsg[self.langue][0])
         # Si le chemin est renseigné
         if path != None:
             self.saveLink = path
