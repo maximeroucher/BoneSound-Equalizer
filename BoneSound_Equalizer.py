@@ -389,11 +389,12 @@ class Inteface:
         # Déclaration d'un objet Tkinter
         self.fen = Tk()
         # Largeur de la fenêtre
-        self.width = 1000
+        self.width = 1366
         # Hauteur de la fenêtre
-        self.height = 650
+        self.height = 700
         # Dimmensionne la fenêtre
         self.fen.geometry(f"{self.width}x{self.height}")
+        #self.fen.state('zoomed')
         # Change le titre de la fenêtre
         self.fen.title("BoneSound Equalizer")
         # Change l'icone de la fenêtre
@@ -445,7 +446,7 @@ class Inteface:
         # Fichiers actuellement ouvert dans l'application
         self.files = []
         # Différents types de musique et leur nombre de répétition du filtre associé
-        self.tags = {"A capella / A cappella": 2, "Chanson française / French chanson": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1}
+        self.tags = {"A capella / A cappella": 2, "Chanson française / French chanson": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
         # Type de musique séléctionné (IntVar permet de modifier la valeru des Radioboutons en le modifiant)
@@ -461,12 +462,12 @@ class Inteface:
         # Image qui change de couleur
         self.LabelImage = Label(self.fen, image=self.image, width=140, height=140, borderwidth=0, highlightthickness=0, background=self.color)
         # Ajoute l'image à la fenêtre
-        self.LabelImage.place(x=300, y=30)
+        self.LabelImage.place(x=450, y=30)
 
         # Drapeau
         flag, _ = self.FlagDict[self.langue]
         self.lblFlag = Label(self.fen, image=flag, width=35, height=35, background='#202225')
-        self.lblFlag.place(x=950, y=600)
+        self.lblFlag.place(x=1300, y=640)
 
 
         # Initialisation de la liste des musique à convertir
@@ -476,13 +477,13 @@ class Inteface:
         # Cadre contenant la liste
         self.MusicFiles = LabelFrame(self.fen, text=self.musicLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicFiles.place(x=self.width - 550, y=25)
+        self.MusicFiles.place(x=700, y=25)
         # Configure l'affichage du cadre
         self.MusicFiles.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['LabelFrame'].append([self.MusicFiles, self.musicLabel])
         # Liste contenant les musiques
-        self.filesList = Listbox(self.MusicFiles, width=82, height=30)
+        self.filesList = Listbox(self.MusicFiles, width=100, height=33)
         # Configure l'affichage de la listbox
         self.filesList.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Inclusion de la liste dans le cadre
@@ -496,7 +497,7 @@ class Inteface:
         # Cadre contenant la liste
         self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=50, y=160)
+        self.MusicTags.place(x=130, y=160)
         # Configure l'affichage du cadre
         self.MusicTags.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -554,7 +555,7 @@ class Inteface:
         # Cadre contenant la barre
         self.Pgb = LabelFrame(self.fen, text=self.pgbLabel.getTxt(), padx=10, pady=10)
         # Placement du cadre dans la fenêtre
-        self.Pgb.place(x=75, y=560)
+        self.Pgb.place(x=75, y=600)
         # Configure l'affichage du cadre
         self.Pgb.configure(background='#202225', foreground="#b6b9be")
         # Ajoute à la liste des objets qui peuvent changer de texte
@@ -591,7 +592,7 @@ class Inteface:
         # Configure le style
         s.configure("red.Horizontal.TProgressbar", troughcolor='#40444B', background=self.color)
         # Barre de progression qui suit l'évolution des différentes opérations de l'application
-        self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=800, mode="determinate", style="red.Horizontal.TProgressbar")
+        self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=1150, mode="determinate", style="red.Horizontal.TProgressbar")
         # La valeur maximale de la barre est 100 (100%)
         self.progressbar["maximum"] = 100
         # Inclusion de la barre de progression dans le cadre
@@ -617,7 +618,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.optlabel)
         # Placement du bouton dans la fenêtre
-        openFileButton.place(x=110, y=90)
+        openFileButton.place(x=190, y=90)
         # Configure le bouton
         openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -631,7 +632,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
-        convBtn.place(x=110, y=495)
+        convBtn.place(x=190, y=540)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -645,7 +646,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.folderLabel)
         # Placement du cadre dans la fenêtre
-        folderbtn.place(x=110, y=30)
+        folderbtn.place(x=190, y=30)
         # Configure le bouton
         folderbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -659,7 +660,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.supprLabel)
         # Placement du cadre dans la fenêtre
-        supprbtn.place(x=810, y=497)
+        supprbtn.place(x=1167, y=545)
         # Configure le bouton
         supprbtn.configure(background="#484B52", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -671,7 +672,7 @@ class Inteface:
         # Configure le cadre
         VolumeLabel.configure(background="#202225", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Place le cadre dans la fenêtre
-        VolumeLabel.place(x=340, y=190)
+        VolumeLabel.place(x=490, y=200)
         # Création du curseur
         scale = Scale(VolumeLabel, from_=-10, to=20, resolution=1, tickinterval=3, length=300, variable=self.volumeGain)
         # Configure le curseur
