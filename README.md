@@ -1,4 +1,4 @@
-# Égaliseur BoneSound / BoneSound-Equalizer
+# Égaliseur BoneSound / BoneSound Equalizer
 
 Un égaliseur pour le casque BoneSound.\
 An equalizer for the BoneSound headset.
@@ -54,7 +54,7 @@ _Don't forget to add ffmpeg.exe, your icon and the image folder to make it work.
 
 ## Construit avec l'outil suivant /  Built with the following tool
 
-- Le convertisseur de son : [FFMPEG](https://ffmpeg.org/)\
+- Le convertisseur de son : [FFMPEG](https://ffmpeg.org/)
 - The Sound converter : [FFMPEG](https://ffmpeg.org/)
 
 ## Auteur / Author
