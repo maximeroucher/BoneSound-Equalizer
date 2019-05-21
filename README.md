@@ -1,4 +1,4 @@
-# Égaliseur BoneSound / BoneSound-Equalizer
+# Égaliseur BoneSound / BoneSound Equalizer
 
 Un égaliseur pour le casque BoneSound.\
 An equalizer for the BoneSound headset.
