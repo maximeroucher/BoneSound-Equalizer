@@ -446,7 +446,7 @@ class Inteface:
         # Fichiers actuellement ouvert dans l'application
         self.files = []
         # Différents types de musique et leur nombre de répétition du filtre associé
-        self.tags = {"A capella / A cappella": 2, "Chanson française / French chanson": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1}
+        self.tags = {"A capella / A cappella": 2, "Chanson française / French song": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
         # Type de musique séléctionné (IntVar permet de modifier la valeru des Radioboutons en le modifiant)
