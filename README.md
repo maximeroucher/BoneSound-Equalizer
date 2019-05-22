@@ -40,6 +40,44 @@ pip install -r requirements.txt
 Lancez juste BoneSound_Equailzer.py et testez toutes les commandes.\
 Just run BoneSound_Equailzer.py and test all commands.
 
+
+## Raccourcis clavier / Keyboard Shortcuts
+
+_Français / French_
+
+**Fenêtre principale :**
+- Suppr : Supprime la première musique de la liste
+- Entrée : Lance la conversion de la musique
+- p : Ouvre la fenêtre des paramètres
+- Ctrl + s : Ouvere la fenêtre de séléction du dossier de sortie
+- Ctrl + n : Ouvre la fenêtre de séléction de la musique
+
+**Fenêtre des paramètres :**
+- Suppr : Ferme la fenêtre
+- c : Ouvre la fenêtre de séléction de la couleur
+- Shift : Change la langue de l'application
+
+**Fenêtre de personnalisation :**
+- Suppr : Ferme la fenêtre
+
+_Anglais / English_
+
+**Main Window :**
+- Suppr : Delete the first song of the list
+- Enter : Start the music conversion
+- p : Open the settings window
+- Ctrl + s : Open the output folder selection window
+- Ctrl + n : Open the music selection window
+
+**Settings window :**
+- Suppr : Close the window
+- c : Open the color selelction window
+- Shift : Swicth the language of the app
+
+**Personalize window :**
+- Suppr : Close the window
+
+
 ## Déploiement / Deployment
 
 Vous pouvez construire le projet en exécutable en installant auto-py-to-exe avec la commande suivante.\

@@ -88,14 +88,16 @@ class Message():
 
 class ProgressBar():
 
-    def __init__(self, progress, msg):
+    def __init__(self, fen):
         """ Barre d'avancement, est appellé à chaque itération du téléchargement
         itype : Tkinter.ttk.ProgressBar, Message()
         """
+        # La fenêtre principale
+        self.fen = fen
         # Progressbar de la fenêtre
-        self.progress = progress
+        self.progress = self.fen.progress
         # Message de la fenêtre
-        self.msg = msg
+        self.msg = self.fen.msg
 
 
     def __call__(self, block_num, block_size, total_size):
@@ -123,7 +125,7 @@ class ProgressBar():
 
 class Equalizer(Thread):
 
-    def __init__(self, nbRepetition, progress, msg, gain, outfile, filesList, files):
+    def __init__(self, nbRepetition, fen, gain):
         """ Transforme la musique pour le casque
         itype : str, int, Tkinter.ttk.ProgressBar, Tkinter.StringVar
         """
@@ -134,14 +136,14 @@ class Equalizer(Thread):
         # Fréquence au  dessus de laquelle, les fréquences sont descendus de 6 dB
         self.lowerFrequency = 9000
         # Le dossier d'enregistrement de la musique
-        self.out = outfile
+        self.out = self.fen.saveLink
         # Message de la fenêtre
-        self.msg = msg
+        self.msg = self.fen.msg
         # Change le message de la fenêtre
         self.msg.changeMsg(4)
         self.msg.update()
         # La liste des musiques
-        self.files = files
+        self.files = self.fen.files
         # Récupère la première musique de la liste
         filename = self.files[0]
         # La suppression du fichier .wav de transition
@@ -152,13 +154,13 @@ class Equalizer(Thread):
         ext = filename.split("\\")[-1].split('.')[0]
         self.outname = f'{self.out}/out - {ext}.wav'
         # Barre de progression de la fenêtre
-        self.progress = progress
+        self.progress = self.fen.progressbar
         # Nombre de fois à appliquer le filtre
         self.nbRepetition = nbRepetition
         # Le gain à appliquer à la musique
         self.gain = gain
         # La liste des musiquesà afficher
-        self.filesList = filesList
+        self.filesList = self.fen.filesList
 
 
     def get_song(self, path):
@@ -255,9 +257,9 @@ class Equalizer(Thread):
 
 class PopupWindow():
 
-    def __init__(self, master, msg, allLabel, error, errorMsg, langue):
+    def __init__(self, master, fen):
         """ Pop-up pour demander le nombre de filtre à appliquer
-        itype : tkinter.Tk(), Message(), 3 dict, str
+        itype : tkinter.Tk(), Interface()
         """
         # Fenêtre au dessus de la principale
         self.top = Toplevel(master)
@@ -265,8 +267,10 @@ class PopupWindow():
         self.top.configure(background='#202225')
         # Taille de fond de la fenêtre
         self.top.geometry(f"300x180")
+        # La fenêtre derrière
+        self.fen = fen
         # Message de la fenêtre
-        self.msg = msg
+        self.msg = self.fen.persoMsg
         # Cadre pour entrer le nombre
         self.lblFrame = LabelFrame(self.top, text=self.msg.getTxt(), padx=10, pady=10)
         # Placement du cadre
@@ -274,7 +278,7 @@ class PopupWindow():
         # Configuration du cadre
         self.lblFrame.configure(background='#202225', foreground="#b6b9be")
         # Liste pour changer la langue du texte
-        self.allLabel = allLabel
+        self.allLabel = self.fen.alltxtObject
         # Permet de changer le texte de l'application
         self.allLabel['LabelFrame'].append([self.lblFrame, self.msg])
         # Entry pour le nombre à entrer
@@ -290,13 +294,15 @@ class PopupWindow():
         # Configuration du bouton
         self.btn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
         # Titre de la fenêtre d'erreur
-        self.error = error
+        self.error = self.fen.error
         # Titre de la fenêtre d'erreur
-        self.errorMsg = errorMsg
+        self.errorMsg = self.fen.allErrorMsg
         # Langue de la pop-up
-        self.langue = langue
+        self.langue = self.fen.langue
         # la valeur du nombre de filtre à appliquer
         self.value = None
+        # Supprimer la première music de la liste : Bouton Suppr
+        self.top.bind('<Delete>', self.cleanup)
 
 
     def cleanup(self):
@@ -310,6 +316,8 @@ class PopupWindow():
             self.value = int(value)
             # Détruit la fenêtre
             self.top.destroy()
+            # Déclare la fermeture de la fenêtre
+            self.fen.popupFen = False
         # Sinon
         else:
             # Pop-up d'erreur
@@ -324,8 +332,8 @@ class PopupWindow():
 class PopupParamWindow():
 
     def __init__(self, master, fen):
-        """ Pop-up pour demander le nombre de filtre à appliquer
-        itype : tkinter.Tk(), Message(), 3 dict, str
+        """ Pop-up de paramètre
+        itype : tkinter.Tk(), Interface()
         """
         # Accède aux propriétés de la fenêtre
         self.fen = fen
@@ -334,11 +342,11 @@ class PopupParamWindow():
         # Les objets qui change de texte
         self.alltxtObject = fen.alltxtObject
         # La langue de la fenêtre
-        self.langue = fen.langue
+        self.langue = self.fen.langue
         # Le nom de la pop-up
-        self.msg = fen.persoMsg
+        self.msg = self.fen.persoMsg
         # Les drapeaux de la pop-up
-        self.FlagDict = fen.FlagDict
+        self.FlagDict = self.fen.FlagDict
         # Fenêtre au dessus de la principale
         self.top = Toplevel(master)
         # Couleur de fond de la fenêtre
@@ -367,12 +375,21 @@ class PopupParamWindow():
         self.lbtn.place(x=75, y=85)
         # Configure le bouton
         self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        # Supprimer la première music de la liste : Bouton Suppr
+        self.top.bind('<Delete>', self.cleanup)
+        # Changer la couleur : Bouton c
+        self.top.bind('<c>', self.fen.getColor)
+        # Change la langue : Bouton Tab
+        self.top.bind('<Shift_L>', self.fen.switchL)
 
 
     def cleanup(self):
         """ Au clic sur le bouton Ok
         """
+        # Ferme la fenêtre
         self.top.destroy()
+        # Déclare la fermeture de la fenêtre
+        self.fen.popupParamFen = False
 
 
 #
@@ -393,8 +410,8 @@ class Inteface:
         # Hauteur de la fenêtre
         self.height = 700
         # Dimmensionne la fenêtre
-        self.fen.geometry(f"{self.width}x{self.height}")
-        #self.fen.state('zoomed')
+        #self.fen.geometry(f"{self.width}x{self.height}")
+        self.fen.state('zoomed')
         # Change le titre de la fenêtre
         self.fen.title("BoneSound Equalizer")
         # Change l'icone de la fenêtre
@@ -438,6 +455,10 @@ class Inteface:
         self.image = ImageTk.PhotoImage(Image.open('./image/Image.png').resize((140, 140)))
         # L'élément séléctionné dans la liste des musiques à transformer
         self.delElement = StringVar()
+        # Si la fenêtre "personnaliser" est ouverte
+        self.popupFen = False
+        # Si la fenêtre "paramètres" est ouverte
+        self.popupParamFen = False
 
 
 
@@ -681,36 +702,69 @@ class Inteface:
         scale.pack()
 
 
-    def popup(self):
-        """ Crée une pop-up pour demander le nombre de filtre à applliquer
-        """
-        # Signale l'utilisation d'une valeur personelle
-        self.applyingPerso = True
-        # Permet de changer entre les deux langues
-        self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
-        # Crée une pop-up pour demander la valeur
-        self.w = PopupWindow(self.fen, self.persoMsg, self.alltxtObject, self.error, self.allErrorMsg, self.langue)
-        # Met la fenêtre au dessus de la principale
-        self.fen.wait_window(self.w.top)
-        # Récupère le nombre entré
-        self.nbFilter = self.w.value
-        # Si aucun nombre n'a été entré
-        if not self.nbFilter:
-            # On n'utilise pas le filtre personalisé
-            self.applyingPerso = False
+        # Raccourci clavier
+
+        # Supprimer la première music de la liste : Bouton Suppr
+        self.fen.bind('<Delete>', self.delMusic)
+        # Lancer la conversion : Bouton Entrée
+        self.fen.bind('<Return>', self.conversion)
+        # Ouvrir les paramètres : Bouton p (minuscule)
+        self.fen.bind('<p>', self.popupParam)
+        # Ouvrir le dossier de sauvegarde : Ctrl + s (minuscule)
+        self.fen.bind('<Control-s>', self.getSaveLink)
+        # Ouvrir la fenêtre d'accès au musiques : Ctrl + n (minuscule)
+        self.fen.bind('<Control-n>', self.openExplorateur)
 
 
-    def popupParam(self):
+    def popup(self, event=None):
         """ Crée une pop-up pour demander le nombre de filtre à applliquer
         """
-        # Signale l'utilisation d'une valeur personelle
-        self.applyingPerso = True
-        # Permet de changer entre les deux langues
-        self.persoMsg = Message(text={'fr': [" Paramètres "], 'en': [" Settings "]}, actualLanguage=self.langue)
-        # Crée une pop-up pour demander la valeur
-        self.p = PopupParamWindow(self.fen, self)
-        # Met la fenêtre au dessus de la principale
-        self.fen.wait_window(self.p.top)
+        try:
+            # Place la fenêtre devant la fenêtre principale
+            self.w.top.lift()
+            self.w.top.attributes('-topmost', True)
+            self.w.top.attributes('-topmost', False)
+            # Focus la fenêtre
+            self.w.top.focus_set()
+        except:
+            self.popupFen = True
+            # Signale l'utilisation d'une valeur personelle
+            self.applyingPerso = True
+            # Permet de changer entre les deux langues
+            self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
+            # Crée une pop-up pour demander la valeur
+            self.w = PopupWindow(self.fen, self)
+            # Met la fenêtre au dessus de la principale
+            self.fen.wait_window(self.w.top)
+            # Récupère le nombre entré
+            self.nbFilter = self.w.value
+            # Si aucun nombre n'a été entré
+            if not self.nbFilter:
+                # On n'utilise pas le filtre personalisé
+                self.applyingPerso = False
+
+
+    def popupParam(self, event=None):
+        """ Crée une pop-up pour demander le nombre de filtre à applliquer
+        """
+        try:
+            # Place la fenêtre devant la fenêtre principale
+            self.p.top.lift()
+            self.p.top.attributes('-topmost', True)
+            self.p.top.attributes('-topmost', False)
+            # Focus la fenêtre
+            self.p.top.focus_set()
+        except:
+            self.popupParamFen = True
+            # Signale l'utilisation d'une valeur personelle
+            # Signale l'utilisation d'une valeur personelle
+            self.applyingPerso = True
+            # Permet de changer entre les deux langues
+            self.persoMsg = Message(text={'fr': [" Paramètres "], 'en': [" Settings "]}, actualLanguage=self.langue)
+            # Crée une pop-up pour demander la valeur
+            self.p = PopupParamWindow(self.fen, self)
+            # Met la fenêtre au dessus de la principale
+            self.fen.wait_window(self.p.top)
 
 
     def getParam(self):
@@ -757,7 +811,7 @@ class Inteface:
             rdb.configure(style=style_name)
 
 
-    def switchL(self):
+    def switchL(self, event=None):
         """ Change le langue de l'application
         """
         # Change 'fr' en 'en' et inversement en fonction de la langue actuelle
@@ -787,7 +841,7 @@ class Inteface:
         self.saveParam()
 
 
-    def getColor(self):
+    def getColor(self, event=None):
         """ Ouvre une fenêtre pour changer la couleur
         """
         # Ouvre la fenêtre
@@ -800,9 +854,14 @@ class Inteface:
             self.saveParam()
             # Change la couleur des objets qui le peuvent
             self.switchColor()
+        # Place la fenêtre devant la fenêtre principale
+        self.p.top.lift()
+        self.p.top.attributes('-topmost', True)
+        self.p.top.attributes('-topmost', False)
+        self.p.top.focus_set()
 
 
-    def delMusic(self):
+    def delMusic(self, event=None):
         try:
             value = self.filesList.get(self.filesList.curselection())
             for x in self.files:
@@ -820,7 +879,7 @@ class Inteface:
         json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
 
 
-    def getSaveLink(self):
+    def getSaveLink(self, event=None):
         """ Récupère le lien vers le dossier de sauvegarde des musiques
         """
         self.openMsg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
@@ -833,7 +892,7 @@ class Inteface:
             self.saveParam()
 
 
-    def conversion(self):
+    def conversion(self, event=None):
         """ Lance la conversion
         """
         # Le lien vers le fichier de sauvegarde
@@ -852,7 +911,7 @@ class Inteface:
             # Remet par défaut l'utilisation du nombre de filtre personalisé
             self.applyingPerso = False
             # lance l'equalizer
-            Equalizer(nbRep, self.progressbar, self.msg, gain, self.saveLink, self.filesList, self.files).start()
+            Equalizer(nbRep, self, gain).start()
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
@@ -867,7 +926,7 @@ class Inteface:
                 messagebox.showerror(self.error[self.langue][3], f"{name}: {e}")
 
 
-    def openExplorateur(self):
+    def openExplorateur(self, event=None):
         # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficier séléstionné
         f = easygui.fileopenbox()
         if f:
