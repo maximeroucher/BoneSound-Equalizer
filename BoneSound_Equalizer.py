@@ -272,9 +272,15 @@ class PopupWindow():
         # La fenêtre derrière
         self.fen = fen
         # Message de la fenêtre
-        self.msg = self.fen.persoMsg
+        self.msg = self.fen.popupMsg
+        # La langue de la fenêtre
+        self.langue = self.fen.langue
+        # Change le titre de la pop-up
+        self.top.title(self.msg.getTxt())
+        # Permet de changer entre les deux langues
+        self.popupMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
         # Cadre pour entrer le nombre
-        self.lblFrame = LabelFrame(self.top, text=self.msg.getTxt(), padx=10, pady=10)
+        self.lblFrame = LabelFrame(self.top, text=self.popupMsg.getTxt(), padx=10, pady=10)
         # Placement du cadre
         self.lblFrame.place(x=30, y=20)
         # Configuration du cadre
@@ -282,7 +288,7 @@ class PopupWindow():
         # Liste pour changer la langue du texte
         self.allLabel = self.fen.alltxtObject
         # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.lblFrame, self.msg])
+        self.allLabel['LabelFrame'].append([self.lblFrame, self.popupMsg])
         # Entry pour le nombre à entrer
         self.entry = Entry(self.lblFrame, width=35)
         # Inclusion de l'Entry dans le cadre
@@ -305,6 +311,8 @@ class PopupWindow():
         self.value = None
         # Supprimer la première music de la liste : Bouton Suppr
         self.top.bind('<Delete>', self.cleanup)
+        # Focus la fenêtre
+        self.top.focus_set()
 
 
     def cleanup(self):
@@ -383,6 +391,8 @@ class PopupParamWindow():
         self.top.bind('<c>', self.fen.getColor)
         # Change la langue : Bouton Tab
         self.top.bind('<Shift_L>', self.fen.switchL)
+        # Focus la fenêtre
+        self.top.focus_set()
 
 
     def cleanup(self):
@@ -427,7 +437,7 @@ class Inteface:
         # Le nom du fihier avec les paramètres
         self.ParamFile = "settings.json"
         # Le lien de sauvegarde et la langue de l'application
-        self.saveLink, self.langue, self.color = self.getParam()
+        self.saveLink, self.langue, self.color, self.MusicLink = self.getParam()
         # Liste de tout les objets contenant du texte
         self.alltxtObject = {'Stringvar': [], "LabelFrame": []}
         # Liste de tout les objets pouvant changer de couleur
@@ -463,13 +473,12 @@ class Inteface:
         self.popupParamFen = False
 
 
-
         # Initialisation des variables
 
         # Fichiers actuellement ouvert dans l'application
         self.files = []
         # Différents types de musique et leur nombre de répétition du filtre associé
-        self.tags = {"A capella / A cappella": 2, "Chanson française / French song": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1}
+        self.tags = {"A capella / A cappella": 2, "Chanson française / French song": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1, "Reggae / Reggae":1}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
         # Type de musique séléctionné (IntVar permet de modifier la valeru des Radioboutons en le modifiant)
@@ -487,10 +496,14 @@ class Inteface:
         # Ajoute l'image à la fenêtre
         self.LabelImage.place(x=450, y=30)
 
-        # Drapeau
+        # Bouton pour changer la langue
         flag, _ = self.FlagDict[self.langue]
-        self.lblFlag = Label(self.fen, image=flag, width=35, height=35, background='#202225')
+        # Création du bouton
+        self.lblFlag = Button(self.fen, image=flag, width=35, height=35, background='#202225', command=self.switchL)
+        # Place le bouton
         self.lblFlag.place(x=1300, y=640)
+        # Configure le bouton
+        self.lblFlag.configure(background="#202225", foreground="#b6b9be", activebackground="#202225", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Initialisation de la liste des musique à convertir
@@ -716,11 +729,14 @@ class Inteface:
         self.fen.bind('<Control-s>', self.getSaveLink)
         # Ouvrir la fenêtre d'accès au musiques : Ctrl + n (minuscule)
         self.fen.bind('<Control-n>', self.openExplorateur)
+        # Change la langue : Bouton Tab
+        self.fen.bind('<Shift_L>', self.switchL)
 
 
     def popup(self, event=None):
         """ Crée une pop-up pour demander le nombre de filtre à applliquer
         """
+        # Envoi la fenêtre à l'avant si elle existe
         try:
             # Place la fenêtre devant la fenêtre principale
             self.w.top.lift()
@@ -728,12 +744,13 @@ class Inteface:
             self.w.top.attributes('-topmost', False)
             # Focus la fenêtre
             self.w.top.focus_set()
+        # Sinon la créer
         except:
             self.popupFen = True
             # Signale l'utilisation d'une valeur personelle
             self.applyingPerso = True
             # Permet de changer entre les deux langues
-            self.persoMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
+            self.popupMsg = Message(text={'fr': [" Personnalisation "], 'en': [" Personalization "]}, actualLanguage=self.langue)
             # Crée une pop-up pour demander la valeur
             self.w = PopupWindow(self.fen, self)
             # Met la fenêtre au dessus de la principale
@@ -749,6 +766,7 @@ class Inteface:
     def popupParam(self, event=None):
         """ Crée une pop-up pour demander le nombre de filtre à applliquer
         """
+        # Envoi la fenêtre à l'avant si elle existe
         try:
             # Place la fenêtre devant la fenêtre principale
             self.p.top.lift()
@@ -756,6 +774,7 @@ class Inteface:
             self.p.top.attributes('-topmost', False)
             # Focus la fenêtre
             self.p.top.focus_set()
+        # Sinon la créer
         except:
             self.popupParamFen = True
             # Signale l'utilisation d'une valeur personelle
@@ -778,11 +797,11 @@ class Inteface:
             # Ouvre le fichier
             f = json.load(open(self.ParamFile))
             # Retourne les paramètres
-            return f["OutputFile"], f['Language'], f['Color']
+            return f["OutputFile"], f['Language'], f['Color'], f['MusicLink']
         # Si le fichier n'est pas dans le dossier
         else:
             # Retourne des paramètres par défaut
-            return None, 'fr', '#6580f1'
+            return None, 'fr', '#6580f1', None
 
 
     def switchColor(self):
@@ -828,18 +847,35 @@ class Inteface:
         for l in self.alltxtObject['LabelFrame']:
             # Change le langue du message de l'objet Message
             l[1].switchLang(self.langue)
+            # Si une fenêtre est ouverte
             try:
                 # Reconfigure le texte du LabelFrame
                 l[0].configure(text=l[1].getTxt())
+            # Sinon
             except:
                 pass
         # Récupère le nouveau drapeau et sa position dans le bouton
         flag, pos = self.FlagDict[self.langue]
         self.lblFlag.configure(image=flag)
-        if self.p:
-            self.p.top.title(self.persoMsg.text[self.langue][0])
-            # Reconfigure le bouton
-            self.p.lbtn.configure(image=flag, compound=pos, justify=pos)
+        # Si la fenêtre des paramètres est ouverte
+        try:
+            if self.p:
+                # Change le titre de la fenêtre
+                self.p.top.title(self.persoMsg.text[self.langue][0])
+                # Reconfigure le bouton
+                self.p.lbtn.configure(image=flag, compound=pos, justify=pos)
+        # Sinon
+        except:
+            pass
+        # Si la fenêtre de personnalisation est ouverte
+        try:
+            if self.w:
+                # Change le titre de la fenêtre
+                self.w.top.title(self.popupMsg.text[self.langue][0])
+        # Sinon
+        except:
+            pass
+        # Sauvegarde les paramètres (la langue ici)
         self.saveParam()
 
 
@@ -860,25 +896,32 @@ class Inteface:
         self.p.top.lift()
         self.p.top.attributes('-topmost', True)
         self.p.top.attributes('-topmost', False)
+        # Focus la fenêtres
         self.p.top.focus_set()
 
 
     def delMusic(self, event=None):
+        # Si il y a une musique à supprimer
         try:
+            # Récupère la place de la musique à supprimer
             value = self.filesList.get(self.filesList.curselection())
+            # Récupère son nom complet (l'affichage le limite)
             for x in self.files:
                 if x.endswith(value):
                     index = self.files.index(x)
                     break
+            # Le supprime de la liste d'affichage et de celle des musiques
             self.files.pop(index)
             self.filesList.delete(index)
-        except:pass
+        # Sinon
+        except:
+            pass
 
 
     def saveParam(self):
         """ Enregistre les paramètres
         """
-        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
+        json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color, "MusicLink": self.MusicLink}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
 
 
     def getSaveLink(self, event=None):
@@ -886,7 +929,7 @@ class Inteface:
         """
         self.openMsg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
         # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
-        path = easygui.diropenbox(self.openMsg[self.langue][0])
+        path = easygui.diropenbox(self.openMsg[self.langue][0], default=self.saveLink)
         # Si le chemin est renseigné
         if path != None:
             self.saveLink = path
@@ -929,22 +972,27 @@ class Inteface:
 
 
     def openExplorateur(self, event=None):
-        # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficier séléstionné
-        f = easygui.fileopenbox()
-        if f:
-            # Si le fichier est un fichier wav est n'est pas déjà dans la liste
-            if f[-4:] in [".wav", ".mp3"] and f not in self.files:
-                # Ajoute le fichier à la liste des fichiers à convertir
-                self.files.append(f)
-                # Enléve ce qui précede le nom du fichier pour plus de compréhesion de l'utilisateur
-                if "\\" in f:
-                    f = f.split("\\")[-1]
-                # Ajoute à l'affichage le nom de fichier
-                self.filesList.insert(len(self.files) - 1, f)
-            # Sinon
-            else:
-                # Pop-up d'erreur
-                messagebox.showerror(self.error[self.langue][0], self.allErrorMsg[self.langue][3])
+        # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficiers séléstionnés
+        files = easygui.fileopenbox(multiple=True, default=self.MusicLink)
+        if files:
+            # Pour chaque fichier de la liste
+            for f in files:
+                # Si le fichier est un fichier wav est n'est pas déjà dans la liste
+                if f[-4:] in [".wav", ".mp3"] and f not in self.files:
+                    # Ajoute le fichier à la liste des fichiers à convertir
+                    self.files.append(f)
+                    # Enléve ce qui précede le nom du fichier pour plus de compréhesion de l'utilisateur
+                    if "\\" in f:
+                        f = f.split("\\")[-1]
+                    # Ajoute à l'affichage le nom de fichier
+                    self.filesList.insert(len(self.files) - 1, f)
+                # Sinon
+                else:
+                    # Pop-up d'erreur
+                    messagebox.showerror(self.error[self.langue][0], self.allErrorMsg[self.langue][3])
+            # Change le fichier de musique
+            self.MusicLink = "\\".join(files[0].split("\\")[:-1]) + "\\"
+            self.saveParam()
 
 
     def run(self):

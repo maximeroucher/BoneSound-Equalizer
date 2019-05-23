@@ -46,11 +46,12 @@ Just run BoneSound_Equailzer.py and test all commands.
 _Français / French_
 
 **Fenêtre principale :**
-- Suppr : Supprime la première musique de la liste
+- Suppr : Supprime la musique séléctionnée de la liste
 - Entrée : Lance la conversion de la musique
 - p : Ouvre la fenêtre des paramètres
 - Ctrl + s : Ouvere la fenêtre de séléction du dossier de sortie
 - Ctrl + n : Ouvre la fenêtre de séléction de la musique
+- Shift : Change la langue de l'application
 
 **Fenêtre des paramètres :**
 - Suppr : Ferme la fenêtre
@@ -63,11 +64,12 @@ _Français / French_
 _Anglais / English_
 
 **Main Window :**
-- Suppr : Delete the first song of the list
+- Suppr : Delete the selected song of the list
 - Enter : Start the music conversion
 - p : Open the settings window
 - Ctrl + s : Open the output folder selection window
 - Ctrl + n : Open the music selection window
+- Shift : Swicth the language of the app
 
 **Settings window :**
 - Suppr : Close the window
