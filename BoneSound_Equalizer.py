@@ -135,6 +135,8 @@ class Equalizer(Thread):
         self.upperFrequency = 450
         # Fréquence au  dessus de laquelle, les fréquences sont descendus de 6 dB
         self.lowerFrequency = 9000
+        # La fenêtre
+        self.fen = fen
         # Le dossier d'enregistrement de la musique
         self.out = self.fen.saveLink
         # Message de la fenêtre
