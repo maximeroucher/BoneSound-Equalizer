@@ -177,31 +177,34 @@ class Equalizer(Thread):
         changeBack = False
         # Si la musique n'est pas en .wav
         if path[-4:] != ".wav":
-            # Il faut enlever le fichier wav de transition
-            self.delWav = True
-            # Enleve les espaces pour éviter les problèmes de cmd
-            if " " in path:
-                # Il faudra rechanger le nom
-                changeBack = True
-                # Change le nom pour éviter le problème cmd
-                path2 = "-".join(path.split(' '))
-                # Renomme le fichier
-                os.renames(path, path2)
-                # Sauvegarde le nouveau fichier
-                path = path2
             # Récupère la nom de la musique sans l'extension
             ext = path.split("\\")[-1].split('.')[0]
-            # Lieu de sauvgarde du fichier une fois converti en .wav
-            outname = f'{self.out}/{ext}.wav'
-            # Convertit le fchier en .wav
-            subprocess.call(f'ffmpeg -y -i "{path}" -vn "{outname}"')
-            # Si il faut rechanger le nom
-            if changeBack:
-                # Renomme les deux fichiers
-                os.renames(path, " - ".join(" ".join(path.split("-")).split("   ")))
-                os.renames(outname, " - ".join(" ".join(outname.split("-")).split("   ")))
-            # Retourne le chemin vers la musique convertie
-            return os.path.abspath(" - ".join(" ".join(outname.split("-")).split("   ")))
+            if f'{ext}.wav' in os.listdir(self.out):
+                return f'{self.out}/{ext}.wav'
+            else:
+                # Il faut enlever le fichier wav de transition
+                self.delWav = True
+                # Enleve les espaces pour éviter les problèmes de cmd
+                if " " in path:
+                    # Il faudra rechanger le nom
+                    changeBack = True
+                    # Change le nom pour éviter le problème cmd
+                    path2 = "-".join(path.split(' '))
+                    # Renomme le fichier
+                    os.renames(path, path2)
+                    # Sauvegarde le nouveau fichier
+                    path = path2
+                    # Lieu de sauvgarde du fichier une fois converti en .wav
+                    outname = f'{self.out}/{ext}.wav'
+                    # Convertit le fchier en .wav
+                    subprocess.call(f'ffmpeg -y -i "{path}" -vn "{outname}"')
+                    # Si il faut rechanger le nom
+                    if changeBack:
+                        # Renomme les deux fichiers
+                        os.renames(path, " - ".join(" ".join(path.split("-")).split("   ")))
+                        os.renames(outname, " - ".join(" ".join(outname.split("-")).split("   ")))
+                    # Retourne le chemin vers la musique convertie
+                    return os.path.abspath(" - ".join(" ".join(outname.split("-")).split("   ")))
         # Sinon, retourne le chemin sans modification
         return path
 
@@ -927,8 +930,8 @@ class Inteface:
     def getSaveLink(self, event=None):
         """ Récupère le lien vers le dossier de sauvegarde des musiques
         """
+        # Change le texte
         self.openMsg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
-
         # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
         path = easygui.diropenbox(self.openMsg[self.langue][0], default=f"{self.saveLink}\\")
         # Si le chemin est renseigné
@@ -942,8 +945,8 @@ class Inteface:
         """ Lance la conversion
         """
         # Le lien vers le fichier de sauvegarde
-        if not self.saveLink:
-            self.saveLink = self.getSaveLink()
+        if self.saveLink == None:
+            self.getSaveLink()
         # Gestion d'erreur
         try:
             # Récupère le type de musiqye séléctionné
