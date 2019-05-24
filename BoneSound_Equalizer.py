@@ -194,7 +194,7 @@ class Equalizer(Thread):
             # Lieu de sauvgarde du fichier une fois converti en .wav
             outname = f'{self.out}/{ext}.wav'
             # Convertit le fchier en .wav
-            subprocess.call(f'ffmpeg -y -i {path} -vn {outname}')
+            subprocess.call(f'ffmpeg -y -i "{path}" -vn "{outname}"')
             # Si il faut rechanger le nom
             if changeBack:
                 # Renomme les deux fichiers
@@ -309,8 +309,8 @@ class PopupWindow():
         self.langue = self.fen.langue
         # la valeur du nombre de filtre à appliquer
         self.value = None
-        # Supprimer la première music de la liste : Bouton Suppr
-        self.top.bind('<Delete>', self.cleanup)
+        # Retourne le filtre : Bouton Entrée
+        self.top.bind('<Return>', self.cleanup)
         # Focus la fenêtre
         self.top.focus_set()
 
@@ -668,7 +668,7 @@ class Inteface:
         # Ajoute à la liste des objets qui peuvent changer de texte
         self.alltxtObject['Stringvar'].append(self.convlabel)
         # Placement du cadre dans la fenêtre
-        convBtn.place(x=190, y=540)
+        convBtn.place(x=190, y=550)
         # Configure le bouton
         convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
@@ -704,7 +704,7 @@ class Inteface:
         # Curseur du gain de volume
 
         # Cadre du curseur
-        VolumeLabel = LabelFrame(self.fen, text=' Volume (dB) ')
+        VolumeLabel = LabelFrame(self.fen, text=' Gain (dB) ')
         # Configure le cadre
         VolumeLabel.configure(background="#202225", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Place le cadre dans la fenêtre
@@ -728,7 +728,7 @@ class Inteface:
         # Ouvrir le dossier de sauvegarde : Ctrl + s (minuscule)
         self.fen.bind('<Control-s>', self.getSaveLink)
         # Ouvrir la fenêtre d'accès au musiques : Ctrl + n (minuscule)
-        self.fen.bind('<Control-n>', self.openExplorateur)
+        self.fen.bind('<Control-o>', self.openExplorateur)
         # Change la langue : Bouton Tab
         self.fen.bind('<Shift_L>', self.switchL)
 
@@ -928,8 +928,9 @@ class Inteface:
         """ Récupère le lien vers le dossier de sauvegarde des musiques
         """
         self.openMsg = {'fr': [" Séléction du dossier de sauvegarde "], 'en': [" Saving folder selection "]}
+
         # Ouvre une fenêtre explorer pour demander le chemin vers le dossier
-        path = easygui.diropenbox(self.openMsg[self.langue][0], default=self.saveLink)
+        path = easygui.diropenbox(self.openMsg[self.langue][0], default=f"{self.saveLink}\\")
         # Si le chemin est renseigné
         if path != None:
             self.saveLink = path
@@ -973,25 +974,26 @@ class Inteface:
 
     def openExplorateur(self, event=None):
         # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficiers séléstionnés
-        files = easygui.fileopenbox(multiple=True, default=self.MusicLink)
+        files = easygui.fileopenbox(multiple=True, default=f"{self.MusicLink}\\")
         if files:
             # Pour chaque fichier de la liste
             for f in files:
                 # Si le fichier est un fichier wav est n'est pas déjà dans la liste
-                if f[-4:] in [".wav", ".mp3"] and f not in self.files:
-                    # Ajoute le fichier à la liste des fichiers à convertir
-                    self.files.append(f)
-                    # Enléve ce qui précede le nom du fichier pour plus de compréhesion de l'utilisateur
-                    if "\\" in f:
-                        f = f.split("\\")[-1]
-                    # Ajoute à l'affichage le nom de fichier
-                    self.filesList.insert(len(self.files) - 1, f)
+                if f[-4:] in [".wav", ".mp3"]:
+                    if f not in self.files:
+                        # Ajoute le fichier à la liste des fichiers à convertir
+                        self.files.append(f)
+                        # Enléve ce qui précede le nom du fichier pour plus de compréhesion de l'utilisateur
+                        if "\\" in f:
+                            f = f.split("\\")[-1]
+                        # Ajoute à l'affichage le nom de fichier
+                        self.filesList.insert(len(self.files) - 1, f)
                 # Sinon
                 else:
                     # Pop-up d'erreur
                     messagebox.showerror(self.error[self.langue][0], self.allErrorMsg[self.langue][3])
             # Change le fichier de musique
-            self.MusicLink = "\\".join(files[0].split("\\")[:-1]) + "\\"
+            self.MusicLink = "\\".join(files[0].split("\\")[:-1])
             self.saveParam()
 
 
