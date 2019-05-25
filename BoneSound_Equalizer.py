@@ -163,6 +163,14 @@ class Equalizer(Thread):
         self.gain = gain
         # La liste des musiquesà afficher
         self.filesList = self.fen.filesList
+        # Le seuil maximal de compression du volume()
+        self.threshold = -20.0
+        # Le ratio de compression (par analogie avec un compresseur physique)
+        self.ration = 4.0
+        # Le delai d'attente entre une valeur supérieur au seuil et la réduction
+        self.attack = 5.0
+        # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
+        self.release = 50.0
 
 
     def get_song(self, path):
@@ -239,6 +247,11 @@ class Equalizer(Thread):
         self.msg.update()
         # Augmente le volume pour compenser les filtres
         song = song + self.gain
+        # Change le message de la fenêtre
+        self.msg.changeMsg(11)
+        self.msg.update()
+        # Applique un compresseur dynaimque
+        song = song.compress_dynamic_range(threshold=self.threshold, ratio=self.ration, attack=self.attack, release=self.release)
         # Exporte le fichier
         song.export(self.outname, format="wav")
         # Change le message de la fenêtre
@@ -603,15 +616,15 @@ class Inteface:
         allMsgPossible = {
             'fr':
             ["Aucune opération actuellement", "Fin du téléchargement", "Recherche du morceau",
-             "Téléchargement de {} au format mp3", "Modification", "Sauvegarde",
+             "Téléchargement de {} au format mp3", "Application du gain de volume", "Sauvegarde",
              "Fin du téléchargement de {}", "Fin du téléchargement éstimé dans {}",
              "Télécharge: {} au format wav", "La musique à déjà été enregistrée",
-             "Téléchargement"],
+             "Téléchargement", "Application de la compression"],
             'en':
             ["No operation currently", "End of the download", "Search for the song",
-             "Downloading of {} at mp3 format", "Changing", "Saving", "End of the download of",
+             "Downloading of {} at mp3 format", "Applying the volume gain", "Saving", "End of the download of",
              "End estimated in {}", "Download: {} in wav format", "The song has already been downloaded",
-             "Downloading"]}
+             "Downloading", "Applying compression"]}
         # Permet de changer le texte contenu dans le label
         self.msg = Message(msg=StringVar(), text=allMsgPossible, actualLanguage=self.langue)
         # Affiche le texte par défaut
