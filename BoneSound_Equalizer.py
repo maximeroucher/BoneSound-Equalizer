@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 import contextlib
 import json
+import re
 import math
 import os
 import re
@@ -15,7 +16,7 @@ import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas, Entry, IntVar, Label, LabelFrame, Listbox, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox
+from tkinter import Button, Canvas,Frame, Entry, IntVar, Label, LabelFrame, Listbox, Menu, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox, ttk
 from tkinter.ttk import Progressbar, Radiobutton, Style
 from tkinter.colorchooser import askcolor
 
@@ -82,6 +83,102 @@ class Message():
 
 
 #
+# ---------- Classe HoverInfo -------------------------------------------------------------------
+#
+
+class HoverInfo(object):
+    '''
+    Code source:
+
+    - https://stackoverflow.com/questions/3221956/what-is-the-simplest-way-to-make-tooltips-in-tkinter/36221216#36221216
+    - http://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
+
+    '''
+
+    def __init__(self, widget, text):
+        self.waittime = 400
+        self.wraplength = 250
+        self.widget = widget
+        self.text = text
+        self.text.update()
+        self.widget.bind("<Enter>", self.onEnter)
+        self.widget.bind("<Leave>", self.onLeave)
+        self.widget.bind("<ButtonPress>", self.onLeave)
+        self.bg = '#36393f'
+        self.fg = '#b6b9be'
+        self.pad = (5, 3, 5, 3)
+        self.id = None
+        self.tw = None
+
+
+    def onEnter(self, event=None):
+        self.schedule()
+
+
+    def onLeave(self, event=None):
+        self.unschedule()
+        self.hide()
+
+
+    def schedule(self):
+        self.unschedule()
+        self.id = self.widget.after(self.waittime, self.show)
+
+
+    def unschedule(self):
+        id_ = self.id
+        self.id = None
+        if id_:
+            self.widget.after_cancel(id_)
+
+
+    def show(self):
+
+        def tip_pos_calculator(widget, label, tip_delta=(10, 5), pad=(5, 3, 5, 3)):
+            w = widget
+            s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
+            width, height = (pad[0] + label.winfo_reqwidth() + pad[2], pad[1] + label.winfo_reqheight() + pad[3])
+            mouse_x, mouse_y = w.winfo_pointerxy()
+            x1, y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
+            x2, y2 = x1 + width, y1 + height
+            x_delta = x2 - s_width
+            if x_delta < 0:
+                x_delta = 0
+            y_delta = y2 - s_height
+            if y_delta < 0:
+                y_delta = 0
+            offscreen = (x_delta, y_delta) != (0, 0)
+            if offscreen:
+                if x_delta:
+                    x1 = mouse_x - tip_delta[0] - width
+                if y_delta:
+                    y1 = mouse_y - tip_delta[1] - height
+            offscreen_again = y1 < 0
+            if offscreen_again:
+                y1 = 0
+            return x1, y1
+
+        bg = self.bg
+        pad = self.pad
+        widget = self.widget
+        self.tw = Toplevel(widget)
+        self.tw.wm_overrideredirect(True)
+        win = Frame(self.tw, background=bg, borderwidth=0)
+        label = ttk.Label(win, textvariable=self.text.msg, justify='left', background=bg, foreground=self.fg,  relief='solid', borderwidth=0, wraplength=self.wraplength)
+        label.grid(padx=(pad[0], pad[2]), pady=(pad[1], pad[3]), sticky='nsew')
+        win.grid()
+        x, y = tip_pos_calculator(widget, label)
+        self.tw.wm_geometry("+%d+%d" % (x, y))
+
+
+    def hide(self):
+        tw = self.tw
+        if tw:
+            tw.destroy()
+        self.tw = None
+
+
+#
 # ---------- Classe ProgressBar -------------------------------------------------------------------
 #
 
@@ -131,46 +228,55 @@ class Equalizer(Thread):
         """
         # Initailisation du Thread
         Thread.__init__(self)
-        # Fréquence en dessous de laquelle, les fréquences sont descendus de 6 dB
-        self.upperFrequency = 450
-        # Fréquence au  dessus de laquelle, les fréquences sont descendus de 6 dB
-        self.lowerFrequency = 9000
+
+        # Paramètres de le fenêtre principale
+
         # La fenêtre
         self.fen = fen
         # Le dossier d'enregistrement de la musique
         self.out = self.fen.saveLink
         # Message de la fenêtre
         self.msg = self.fen.msg
-        # Change le message de la fenêtre
-        self.msg.changeMsg(4)
-        self.msg.update()
         # La liste des musiques
         self.files = self.fen.files
         # Récupère la première musique de la liste
         filename = self.files[0]
+        # Barre de progression de la fenêtre
+        self.progress = self.fen.progressbar
+        # La liste des musiquesà afficher
+        self.filesList = self.fen.filesList
+        # Le seuil maximal de compression du volume
+        self.threshold = self.fen.threshold
+        # Le ratio de compression (par analogie avec un compresseur physique)
+        self.ratio = self.fen.ratio
+        # Le delai d'attente entre une valeur supérieur au seuil et la réduction
+        self.attack = self.fen.attack
+        # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
+        self.release = self.fen.release
+
+        # Paramètres internes
+
+        # Fréquence en dessous de laquelle, les fréquences sont descendus de 6 dB
+        self.upperFrequency = 450
+        # Fréquence au  dessus de laquelle, les fréquences sont descendus de 6 dB
+        self.lowerFrequency = 9000
         # La suppression du fichier .wav de transition
         self.delWav = False
+        # Le gain à appliquer à la musique
+        self.gain = gain
+        # Nombre de fois à appliquer le filtre
+        self.nbRepetition = nbRepetition
+
+        # Message et fichier de sortie
+
         # Nom du fichier à transformer (déjà en wav)
         self.filename = self.get_song(filename)
         # Nom de fichier en sortie
         ext = filename.split("\\")[-1].split('.')[0]
         self.outname = f'{self.out}/out - {ext}.wav'
-        # Barre de progression de la fenêtre
-        self.progress = self.fen.progressbar
-        # Nombre de fois à appliquer le filtre
-        self.nbRepetition = nbRepetition
-        # Le gain à appliquer à la musique
-        self.gain = gain
-        # La liste des musiquesà afficher
-        self.filesList = self.fen.filesList
-        # Le seuil maximal de compression du volume()
-        self.threshold = -20.0
-        # Le ratio de compression (par analogie avec un compresseur physique)
-        self.ration = 4.0
-        # Le delai d'attente entre une valeur supérieur au seuil et la réduction
-        self.attack = 5.0
-        # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
-        self.release = 50.0
+        # Change le message de la fenêtre
+        self.msg.changeMsg(4)
+        self.msg.update()
 
 
     def get_song(self, path):
@@ -221,13 +327,19 @@ class Equalizer(Thread):
         """ Transformation de la musique
         """
         # Le nombre d'étape maximale
-        max_value = 2 * self.nbRepetition + 2
+        max_value = 2 * self.nbRepetition + 3
         # Progression de la barre
         x = 1
+
+        # Ouverture du fichier
+
         # Ouvre le fichier à transformer
         song = AudioSegment.from_wav(self.filename)
         # Change la barre de progression de la fenêtre
         self.progress['value'] = x / max_value * 100
+
+        # Apllication filter
+
         for _ in range(self.nbRepetition):
             # HighPass Filter qui limite les fréquences basses
             song = song.high_pass_filter(self.upperFrequency)
@@ -239,6 +351,9 @@ class Equalizer(Thread):
             # Change la barre de progression de la fenêtre
             x += 1
             self.progress['value'] = x / max_value * 100
+
+        # Application du gain
+
         # Change la barre de progression de la fenêtre
         x += 1
         self.progress['value'] = x / max_value * 100
@@ -247,11 +362,20 @@ class Equalizer(Thread):
         self.msg.update()
         # Augmente le volume pour compenser les filtres
         song = song + self.gain
+
+        # Application du compresseur
+
         # Change le message de la fenêtre
         self.msg.changeMsg(11)
         self.msg.update()
+        # Change la barre de progression de la fenêtre
+        x += 1
+        self.progress['value'] = x / max_value * 100
         # Applique un compresseur dynaimque
-        song = song.compress_dynamic_range(threshold=self.threshold, ratio=self.ration, attack=self.attack, release=self.release)
+        song = song.compress_dynamic_range(threshold=self.threshold, ratio=self.ratio, attack=self.attack, release=self.release)
+
+        # Exportation du fichier
+
         # Exporte le fichier
         song.export(self.outname, format="wav")
         # Change le message de la fenêtre
@@ -259,6 +383,9 @@ class Equalizer(Thread):
         self.msg.update()
         # Change la barre de progression de la fenêtre
         self.progress['value'] = 0
+
+        # Suppression du fichier de l'espace de travail
+
         # La supprime de l'affichage
         self.filesList.delete(0)
         # Enlève de la liste la musique
@@ -279,54 +406,148 @@ class PopupWindow():
         """ Pop-up pour demander le nombre de filtre à appliquer
         itype : tkinter.Tk(), Interface()
         """
+
+        # Initialisation de la fenêtre
+
         # Fenêtre au dessus de la principale
         self.top = Toplevel(master)
         # Couleur de fond de la fenêtre
         self.top.configure(background='#202225')
         # Taille de fond de la fenêtre
-        self.top.geometry(f"300x180")
+        self.top.geometry(f"800x700")
+
+        # Récupération des varriables de la fenêtre principale
+
         # La fenêtre derrière
         self.fen = fen
         # Message de la fenêtre
         self.msg = self.fen.popupMsg
         # La langue de la fenêtre
         self.langue = self.fen.langue
+        # Titre de la fenêtre d'erreur
+        self.error = self.fen.error
+        # Titre de la fenêtre d'erreur
+        self.errorMsg = self.fen.allErrorMsg
+        # Liste pour changer la langue du texte
+        self.allLabel = self.fen.alltxtObject
+        # la valeur du nombre de filtre à appliquer
+        self.value = None
+        # Le seuil maximal de compression du volume
+        self.threshold = self.fen.threshold
+        # Le ratio de compression (par analogie avec un compresseur physique)
+        self.ratio = self.fen.ratio
+        # Le delai d'attente entre une valeur supérieur au seuil et la réduction
+        self.attack = self.fen.attack
+        # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
+        self.release = self.fen.release
         # Change le titre de la pop-up
         self.top.title(self.msg.getTxt())
+
+
+        # Boutons
+
         # Permet de changer entre les deux langues
-        self.popupMsg = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
+        self.filtertxt = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
         # Cadre pour entrer le nombre
-        self.lblFrame = LabelFrame(self.top, text=self.popupMsg.getTxt(), padx=10, pady=10)
+        self.lblFrame = LabelFrame(self.top, text=self.filtertxt.getTxt(), padx=10, pady=10)
         # Placement du cadre
         self.lblFrame.place(x=30, y=20)
         # Configuration du cadre
         self.lblFrame.configure(background='#202225', foreground="#b6b9be")
-        # Liste pour changer la langue du texte
-        self.allLabel = self.fen.alltxtObject
         # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.lblFrame, self.popupMsg])
-        # Entry pour le nombre à entrer
-        self.entry = Entry(self.lblFrame, width=35)
-        # Inclusion de l'Entry dans le cadre
-        self.entry.pack()
-        # Configuration de l'Entry
-        self.entry.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+        self.allLabel['LabelFrame'].append([self.lblFrame, self.filtertxt])
+
         # Bouton Ok
         self.btn = Button(self.top, text='Ok', command=self.cleanup, width=15, height=2)
         # Placement du bouton
         self.btn.place(x=90, y=110)
         # Configuration du bouton
         self.btn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-        # Titre de la fenêtre d'erreur
-        self.error = self.fen.error
-        # Titre de la fenêtre d'erreur
-        self.errorMsg = self.fen.allErrorMsg
-        # Langue de la pop-up
-        self.langue = self.fen.langue
-        # la valeur du nombre de filtre à appliquer
-        self.value = None
+
+
+        # Scales
+
+        # Permet de changer entre les deux langues
+        self.threstxt = Message(text={'fr': [" Seuil (dB) "], 'en': [" Threshold (dB) "]}, actualLanguage=self.langue)
+        # Cadre du curseur
+        self.ThreshLabel = LabelFrame(self.top, text=self.threstxt.getTxt(), padx=10, pady=10)
+        # Configure le cadre
+        self.ThreshLabel.configure(background="#202225", foreground="#b6b9be")
+        # Place le cadre dans la fenêtre
+        self.ThreshLabel.place(x=100, y=250)
+        # Permet de changer le texte de l'application
+        self.allLabel['LabelFrame'].append([self.ThreshLabel, self.threstxt])
+        # Création du curseur
+        ThreshScale = Scale(self.ThreshLabel, from_=-20, to=0, resolution=1, tickinterval=2, length=300, variable=self.threshold)
+        # Configure le curseur
+        ThreshScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
+        # Inclusion du curseur
+        ThreshScale.pack()
+
+        # Permet de changer entre les deux langues
+        self.attackmsg = Message(text={'fr': [" Attaque (ms) "], 'en': [" Attack (ms) "]}, actualLanguage=self.langue)
+        # Cadre du curseur
+        self.attackLabel = LabelFrame(self.top, text=self.attackmsg.getTxt(), padx=10, pady=10)
+        # Configure le cadre
+        self.attackLabel.configure(background="#202225", foreground="#b6b9be")
+        # Place le cadre dans la fenêtre
+        self.attackLabel.place(x=250, y=250)
+        # Permet de changer le texte de l'application
+        self.allLabel['LabelFrame'].append([self.attackLabel, self.attackmsg])
+        # Création du curseur
+        attackScale = Scale(self.attackLabel, from_=0, to=100, resolution=1, tickinterval=10, length=300, variable=self.attack)
+        # Configure le curseur
+        attackScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
+        # Inclusion du curseur
+        attackScale.pack()
+
+        # Permet de changer entre les deux langues
+        self.relmsg = Message(text={'fr': [" Libération (ms) "], 'en': [" Release (ms) "]}, actualLanguage=self.langue)
+        # Cadre du curseur
+        self.resLabel = LabelFrame(self.top, text=self.relmsg.getTxt(), padx=10, pady=10)
+        # Configure le cadre
+        self.resLabel.configure(background="#202225", foreground="#b6b9be")
+        # Place le cadre dans la fenêtre
+        self.resLabel.place(x=400, y=250)
+        # Permet de changer le texte de l'application
+        self.allLabel['LabelFrame'].append([self.resLabel, self.relmsg])
+        # Création du curseur
+        relScale = Scale(self.resLabel, from_=0, to=100, resolution=1, tickinterval=10, length=300, variable=self.release)
+        # Configure le curseur
+        relScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
+        # Inclusion du curseur
+        relScale.pack()
+
+        # Cadre du curseur
+        self.ratLabel = LabelFrame(self.top, text=" Ratio ", padx=10, pady=10)
+        # Configure le cadre
+        self.ratLabel.configure(background="#202225", foreground="#b6b9be")
+        # Place le cadre dans la fenêtre
+        self.ratLabel.place(x=550, y=250)
+        # Création du curseur
+        ratScale = Scale(self.ratLabel, from_=1, to=10, resolution=1, tickinterval=1, length=300, variable=self.ratio)
+        # Configure le curseur
+        ratScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
+        # Inclusion du curseur
+        ratScale.pack()
+
+
+        # Entry
+
+        # Entry pour le nombre à entrer
+        self.entry = Entry(self.lblFrame, width=35)
+        # Inclusion de l'Entry dans le cadre
+        self.entry.pack()
+        # Configuration de l'Entry
+        self.entry.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+
+
+        # Bind et focus
+
         # Retourne le filtre : Bouton Entrée
         self.top.bind('<Return>', self.cleanup)
+        # Change la langue : Bouton Tab
+        self.top.bind('<Shift_L>', self.fen.switchL)
         # Focus la fenêtre
         self.top.focus_set()
 
@@ -487,6 +708,14 @@ class Inteface:
         self.popupFen = False
         # Si la fenêtre "paramètres" est ouverte
         self.popupParamFen = False
+        # Le seuil maximal de compression du volume
+        self.threshold = -20
+        # Le ratio de compression (par analogie avec un compresseur physique)
+        self.ratio = 4
+        # Le delai d'attente entre une valeur supérieur au seuil et la réduction
+        self.attack = 5
+        # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
+        self.release = 50
 
 
         # Initialisation des variables
@@ -511,15 +740,6 @@ class Inteface:
         self.LabelImage = Label(self.fen, image=self.image, width=140, height=140, borderwidth=0, highlightthickness=0, background=self.color)
         # Ajoute l'image à la fenêtre
         self.LabelImage.place(x=450, y=30)
-
-        # Bouton pour changer la langue
-        flag, _ = self.FlagDict[self.langue]
-        # Création du bouton
-        self.lblFlag = Button(self.fen, image=flag, width=35, height=35, background='#202225', command=self.switchL)
-        # Place le bouton
-        self.lblFlag.place(x=1300, y=640)
-        # Configure le bouton
-        self.lblFlag.configure(background="#202225", foreground="#b6b9be", activebackground="#202225", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Initialisation de la liste des musique à convertir
@@ -653,12 +873,22 @@ class Inteface:
 
         # Initialisation des boutons
 
-        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        openFileButton = Button(self.fen, image=self.ParamImg, command=self.popupParam, width=35, height=35)
-        # Placement du bouton dans la fenêtre
-        openFileButton.place(x=10, y=10)
+        # Bouton pour changer la langue
+        flag, _ = self.FlagDict[self.langue]
+        # Création du bouton
+        self.lblFlag = Button(self.fen, image=flag, width=35, height=35, background='#202225', command=self.switchL)
+        # Place le bouton
+        self.lblFlag.place(x=1300, y=640)
         # Configure le bouton
-        openFileButton.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
+        self.lblFlag.configure(background="#202225", foreground="#b6b9be", activebackground="#202225", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
+        parambtn = Button(self.fen, image=self.ParamImg, command=self.popupParam, width=35, height=35)
+        # Placement du bouton dans la fenêtre
+        parambtn.place(x=10, y=10)
+        # Configure le bouton
+        parambtn.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
 
 
         # Permet de changer le texte contenu dans le bouton
@@ -733,6 +963,72 @@ class Inteface:
         scale.pack()
 
 
+        # Hovers
+
+        # Permet de changer le texte contenu dans le bouton
+        self.supprhover = Message(msg=StringVar(), text={'fr': ["Supprimer la musique séléctionnée\nRaccourçi clavier : Suppr"], 'en': ['Delete selected music\nKeyboard shortcut : Suppr']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.supprhover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.supprhover)
+        # Création d'un objet HoverInfo
+        HoverInfo(supprbtn, text=self.supprhover)
+
+        # Permet de changer le texte contenu dans le bouton
+        self.outhover = Message(msg=StringVar(), text={'fr': ["Séléctionner le fichier de sortie\nRaccourçi clavier : Ctrl + s"], 'en': ['Select the output folder\nKeyboard shortcut : Ctrl + s']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.outhover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.outhover)
+        # Création d'un objet HoverInfo
+        HoverInfo(folderbtn, text=self.outhover)
+
+        # Permet de changer le texte contenu dans le bouton
+        self.convhover = Message(msg=StringVar(), text={'fr': ["Lance la conversion de la musique\nRaccourçi clavier : Entrée"], 'en': ['Start the musique conversion\nKeyboard shortcut : Return']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.convhover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.convhover)
+        # Création d'un objet HoverInfo
+        HoverInfo(convBtn, text=self.convhover)
+
+        # Permet de changer le texte contenu dans le bouton
+        self.paramhover = Message(msg=StringVar(), text={'fr': ["Ouvre la fenêtre des paramètres\nRaccourçi clavier : p"], 'en': ['Open the settings window\nKeyboard shortcut : p']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.paramhover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.paramhover)
+        # Création d'un objet HoverInfo
+        HoverInfo(parambtn, text=self.paramhover)
+
+        # Permet de changer le texte contenu dans le bouton
+        self.exphover = Message(msg=StringVar(), text={'fr': ["Ouvre la fenêtre de séléction de la musique\nRaccourçi clavier : Ctrl + o"], 'en': ['Open the music selection window\nKeyboard shortcut : Ctrl + o']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.exphover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.exphover)
+        # Création d'un objet HoverInfo
+        HoverInfo(openFileButton, text=self.exphover)
+
+        # Permet de changer le texte contenu dans le bouton
+        self.lphover = Message(msg=StringVar(), text={'fr': ["Change de langue\nRaccourçi clavier : Ctrl + o"], 'en': ['Change language\nKeyboard shortcut : Ctrl + o']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.lphover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.lphover)
+        # Création d'un objet HoverInfo
+        HoverInfo(self.lblFlag, text=self.lphover)
+
+        # Permet de changer le texte contenu dans le bouton
+        self.persophover = Message(msg=StringVar(), text={'fr': ["Ouvre la fenêtre de personnalisation\nRaccourçi clavier : Ctrl + o"], 'en': ['Open the personailze window\nKeyboard shortcut : Ctrl + o']}, actualLanguage=self.langue)
+        # Affiche le texte par défaut
+        self.persophover.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.alltxtObject['Stringvar'].append(self.persophover)
+        # Création d'un objet HoverInfo
+        HoverInfo(persoBtn, text=self.persophover)
+
+
         # Raccourci clavier
 
         # Supprimer la première music de la liste : Bouton Suppr
@@ -743,10 +1039,12 @@ class Inteface:
         self.fen.bind('<p>', self.popupParam)
         # Ouvrir le dossier de sauvegarde : Ctrl + s (minuscule)
         self.fen.bind('<Control-s>', self.getSaveLink)
-        # Ouvrir la fenêtre d'accès au musiques : Ctrl + n (minuscule)
+        # Ouvrir la fenêtre d'accès au musiques : Ctrl + o (minuscule)
         self.fen.bind('<Control-o>', self.openExplorateur)
         # Change la langue : Bouton Tab
         self.fen.bind('<Shift_L>', self.switchL)
+        # Change la langue : Bouton Tab
+        self.fen.bind('<Control-p>', self.switchL)
 
 
     def popup(self, event=None):

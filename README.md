@@ -50,7 +50,8 @@ _Français / French_
 - Entrée : Lance la conversion de la musique
 - p : Ouvre la fenêtre des paramètres
 - Ctrl + s : Ouvere la fenêtre de séléction du dossier de sortie
-- Ctrl + n : Ouvre la fenêtre de séléction de la musique
+- Ctrl + o : Ouvre la fenêtre de séléction de la musique
+- Ctrl + p : Ouvre la fenêtre de personnalisation
 - Shift : Change la langue de l'application
 
 **Fenêtre des paramètres :**
@@ -68,7 +69,8 @@ _Anglais / English_
 - Enter : Start the music conversion
 - p : Open the settings window
 - Ctrl + s : Open the output folder selection window
-- Ctrl + n : Open the music selection window
+- Ctrl + o : Open the music selection window
+- Ctrl + p : Open the personalize window
 - Shift : Swicth the language of the app
 
 **Settings window :**
