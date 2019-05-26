@@ -5,9 +5,9 @@
 
 from __future__ import unicode_literals
 
+# Librairies intégrées par défaut à Python
 import contextlib
 import json
-import re
 import math
 import os
 import re
@@ -16,14 +16,73 @@ import sys
 import urllib
 from collections import OrderedDict
 from threading import Thread
-from tkinter import Button, Canvas,Frame, Entry, IntVar, Label, LabelFrame, Listbox, Menu, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox, ttk
-from tkinter.ttk import Progressbar, Radiobutton, Style
+from tkinter import Button, Canvas, Entry, Frame, IntVar, Label, LabelFrame, Listbox, Menu, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox, ttk
 from tkinter.colorchooser import askcolor
+from tkinter.ttk import Progressbar, Radiobutton, Style
 
+# Librairies à installer
 import easygui
 import numpy as np
 from PIL import Image, ImageTk
 from pydub import AudioSegment
+
+
+#
+# ---------- Fonctions ---------------------------------------------------------------------------
+#
+
+
+def makeHover(fen, btn, txt):
+    # Permet de changer le texte contenu dans le bouton
+    msg = Message(msg=StringVar(), text=txt, actualLanguage=fen.langue)
+    # Affiche le texte par défaut
+    msg.update()
+    # Ajoute à la liste des objets qui peuvent changer de texte
+    fen.alltxtObject['Stringvar'].append(msg)
+    # Création d'un objet HoverInfo
+    HoverInfo(btn, text=msg)
+
+
+def makeLBtn(fen, scr, txt, x, y, command, width=15, height=2, bg="#40444B", fg="#b6b9be"):
+    # Permet de changer le texte contenu dans le bouton
+    msg = Message(msg=StringVar(), text=txt, actualLanguage=scr.langue)
+    # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
+    btn = Button(fen, textvariable=msg.msg, command=command, width=width, height=height)
+    # Affiche le texte par défaut
+    msg.update()
+    # Ajoute à la liste des objets qui peuvent changer de texte
+    scr.alltxtObject['Stringvar'].append(msg)
+    if x != None and y != None:
+        # Placement du bouton dans la fenêtre
+        btn.place(x=x, y=y)
+    # Configure le bouton
+    btn.configure(background=bg, foreground=fg, activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+    return btn
+
+
+def makeLLabel(fen, scr, txt, x, y):
+    # Permet de changer le texte contenu dans le cadre
+    msg = Message(text=txt, actualLanguage=scr.langue)
+    # Cadre contenant la liste
+    lblf = LabelFrame(fen, text=msg.getTxt(), padx=10, pady=10)
+    # Placement du cadre dans la fenêtre
+    lblf.place(x=x, y=y)
+    # Configure l'affichage du cadre
+    lblf.configure(background='#202225', foreground="#b6b9be")
+    # Ajoute à la liste des objets qui peuvent changer de texte
+    scr.alltxtObject['LabelFrame'].append([lblf, msg])
+    return lblf
+
+
+def makeScale(fen, param, low, high, res):
+    # Création du curseur
+    scl = Scale(fen, from_=low, to=high, resolution=1, tickinterval=res, length=300, variable=param)
+    # Configure le curseur
+    scl.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
+    # Inclusion du curseur
+    scl.pack()
+    return scl
+
 
 
 #
@@ -83,49 +142,73 @@ class Message():
 
 
 #
-# ---------- Classe HoverInfo -------------------------------------------------------------------
+# ---------- Classe HoverInfo ---------------------------------------------------------------------
 #
 
 class HoverInfo(object):
-    '''
-    Code source:
-
-    - https://stackoverflow.com/questions/3221956/what-is-the-simplest-way-to-make-tooltips-in-tkinter/36221216#36221216
-    - http://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
-
-    '''
 
     def __init__(self, widget, text):
+        """
+        Message d'aide
+
+        Code source:
+
+        - https://stackoverflow.com/questions/3221956/what-is-the-simplest-way-to-make-tooltips-in-tkinter/36221216#36221216
+        - http://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
+
+        itype : tkinter.Button(), Message()
+        """
+        # Le temps avant l'affichage
         self.waittime = 400
+        # Le longueur de la fenêtre
         self.wraplength = 250
+        # Le bouton
         self.widget = widget
+        # Le texte
         self.text = text
+        # Met le texte par défaut
         self.text.update()
+        # Quand la souris passe sur le bouton, active la fonction
         self.widget.bind("<Enter>", self.onEnter)
+        # Quand la souris part du bouton, active la fonction
         self.widget.bind("<Leave>", self.onLeave)
+        # Quand l'utilisatuer clique sur le bouton
         self.widget.bind("<ButtonPress>", self.onLeave)
+        # Couleur de fond du message
         self.bg = '#36393f'
+        # Couleur du message
         self.fg = '#b6b9be'
+        # Espace entre les bords et le texte
         self.pad = (5, 3, 5, 3)
+        # L'identifiant du message
         self.id = None
+        # La fenêtre comprenant le message
         self.tw = None
 
 
     def onEnter(self, event=None):
+        """ Quand la souris passe sur le bouton
+        """
         self.schedule()
 
 
     def onLeave(self, event=None):
+        """ Quand la souris part du bouton
+        """
         self.unschedule()
         self.hide()
 
 
     def schedule(self):
+        """ Réinitialise l'identifiant du message
+        """
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.show)
 
 
     def unschedule(self):
+        """ Supprime l'identifiant du message
+        """
         id_ = self.id
         self.id = None
         if id_:
@@ -133,48 +216,82 @@ class HoverInfo(object):
 
 
     def show(self):
+        """ Affiche le message
+        """
 
         def tip_pos_calculator(widget, label, tip_delta=(10, 5), pad=(5, 3, 5, 3)):
+            """ calcule l'emplacement du message à partir de celui de la souris
+            """
+            # Appropriation du bouton
             w = widget
+            # récupération des dimmensions de l'écran
             s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
+            # Calcul des dimensions de la fenêtre
             width, height = (pad[0] + label.winfo_reqwidth() + pad[2], pad[1] + label.winfo_reqheight() + pad[3])
+            # Récupération des coordonnées de la souris
             mouse_x, mouse_y = w.winfo_pointerxy()
+            # Décale l'emplacement de la fenêtre pour ne pas être géné par la souris (x1 et y1 sont les coordonnées du coin supérieur gauche de la fenêtre)
             x1, y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
+            # Calcul des coordonnées du coin inférieur droit de la fenêtre
             x2, y2 = x1 + width, y1 + height
+
+            # Calcul de la distance entre le bord droit de l'écran et celui de la fenêtre
             x_delta = x2 - s_width
+            # Si la fenêtre sort de l'écran
             if x_delta < 0:
+                # Colle le fenêtre au bord droit de l'écran
                 x_delta = 0
+
+            # Calcul de la distance entre le bord supérieur de l'écran et celui de la fenêtre
             y_delta = y2 - s_height
+            # Si la fenêtre sort de l'écran
             if y_delta < 0:
+                # Colle le fenêtre au bord droit de l'écran
                 y_delta = 0
-            offscreen = (x_delta, y_delta) != (0, 0)
-            if offscreen:
+
+            # Si le coin supérieur droit de la fenêtre n'est pas dans celui de l'écran
+            if (x_delta, y_delta) != (0, 0):
                 if x_delta:
                     x1 = mouse_x - tip_delta[0] - width
                 if y_delta:
                     y1 = mouse_y - tip_delta[1] - height
-            offscreen_again = y1 < 0
-            if offscreen_again:
+            if y1 < 0:
                 y1 = 0
+
             return x1, y1
 
+        # Couleur du fond
         bg = self.bg
+        # Marge de la fenêtre
         pad = self.pad
+        # Le bouton duquel le fenêtre doit appaître
         widget = self.widget
+        # Création d'une pop-up
         self.tw = Toplevel(widget)
+        # Enlève les boutons fermer, réduire et plein écran de la fenêtre
         self.tw.wm_overrideredirect(True)
+        # Création de l'emplacement pour le texte
         win = Frame(self.tw, background=bg, borderwidth=0)
+        # Mise en place du texte à afficher
         label = ttk.Label(win, textvariable=self.text.msg, justify='left', background=bg, foreground=self.fg,  relief='solid', borderwidth=0, wraplength=self.wraplength)
+        # Place le texte dans la zone dédiée
         label.grid(padx=(pad[0], pad[2]), pady=(pad[1], pad[3]), sticky='nsew')
+        # Passe la fenêtre en mode grid pour pouvoir la placer sur l'écran
         win.grid()
+        # Calcul des coordonnées de la fenêtre
         x, y = tip_pos_calculator(widget, label)
-        self.tw.wm_geometry("+%d+%d" % (x, y))
+        # Dimensionne la fenêtre
+        self.tw.wm_geometry(f"+{x}+{y}")
 
 
     def hide(self):
+        # Appropriation de la fenêtre
         tw = self.tw
+        # Si elle existe
         if tw:
+            # Déstruction de la fenêtre
             tw.destroy()
+        # La fenêtre n'esiste plus
         self.tw = None
 
 
@@ -293,7 +410,9 @@ class Equalizer(Thread):
         if path[-4:] != ".wav":
             # Récupère la nom de la musique sans l'extension
             ext = path.split("\\")[-1].split('.')[0]
+            # Si un fichier wav avec le même nom existe
             if f'{ext}.wav' in os.listdir(self.out):
+                # Retourne le fichier wav pour éciter la conversion
                 return f'{self.out}/{ext}.wav'
             else:
                 # Il faut enlever le fichier wav de transition
@@ -429,33 +548,24 @@ class PopupWindow():
         # Titre de la fenêtre d'erreur
         self.errorMsg = self.fen.allErrorMsg
         # Liste pour changer la langue du texte
-        self.allLabel = self.fen.alltxtObject
+        self.alltxtObject = self.fen.alltxtObject
         # la valeur du nombre de filtre à appliquer
         self.value = None
         # Le seuil maximal de compression du volume
-        self.threshold = self.fen.threshold
+        self.threshold = IntVar(value=self.fen.threshold)
         # Le ratio de compression (par analogie avec un compresseur physique)
-        self.ratio = self.fen.ratio
+        self.ratio = IntVar(value=self.fen.ratio)
         # Le delai d'attente entre une valeur supérieur au seuil et la réduction
-        self.attack = self.fen.attack
+        self.attack = IntVar(value=self.fen.attack)
         # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
-        self.release = self.fen.release
+        self.release = IntVar(value=self.fen.release)
         # Change le titre de la pop-up
         self.top.title(self.msg.getTxt())
 
 
         # Boutons
 
-        # Permet de changer entre les deux langues
-        self.filtertxt = Message(text={'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, actualLanguage=self.langue)
-        # Cadre pour entrer le nombre
-        self.lblFrame = LabelFrame(self.top, text=self.filtertxt.getTxt(), padx=10, pady=10)
-        # Placement du cadre
-        self.lblFrame.place(x=30, y=20)
-        # Configuration du cadre
-        self.lblFrame.configure(background='#202225', foreground="#b6b9be")
-        # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.lblFrame, self.filtertxt])
+        self.lblFrame = makeLLabel(self.top, self.fen, {'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, 30, 20)
 
         # Bouton Ok
         self.btn = Button(self.top, text='Ok', command=self.cleanup, width=15, height=2)
@@ -467,72 +577,19 @@ class PopupWindow():
 
         # Scales
 
-        # Permet de changer entre les deux langues
-        self.threstxt = Message(text={'fr': [" Seuil (dB) "], 'en': [" Threshold (dB) "]}, actualLanguage=self.langue)
-        # Cadre du curseur
-        self.ThreshLabel = LabelFrame(self.top, text=self.threstxt.getTxt(), padx=10, pady=10)
-        # Configure le cadre
-        self.ThreshLabel.configure(background="#202225", foreground="#b6b9be")
-        # Place le cadre dans la fenêtre
-        self.ThreshLabel.place(x=100, y=250)
-        # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.ThreshLabel, self.threstxt])
-        # Création du curseur
-        ThreshScale = Scale(self.ThreshLabel, from_=-20, to=0, resolution=1, tickinterval=2, length=300, variable=self.threshold)
-        # Configure le curseur
-        ThreshScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
-        # Inclusion du curseur
-        ThreshScale.pack()
-
-        # Permet de changer entre les deux langues
-        self.attackmsg = Message(text={'fr': [" Attaque (ms) "], 'en': [" Attack (ms) "]}, actualLanguage=self.langue)
-        # Cadre du curseur
-        self.attackLabel = LabelFrame(self.top, text=self.attackmsg.getTxt(), padx=10, pady=10)
-        # Configure le cadre
-        self.attackLabel.configure(background="#202225", foreground="#b6b9be")
-        # Place le cadre dans la fenêtre
-        self.attackLabel.place(x=250, y=250)
-        # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.attackLabel, self.attackmsg])
-        # Création du curseur
-        attackScale = Scale(self.attackLabel, from_=0, to=100, resolution=1, tickinterval=10, length=300, variable=self.attack)
-        # Configure le curseur
-        attackScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
-        # Inclusion du curseur
-        attackScale.pack()
-
-        # Permet de changer entre les deux langues
-        self.relmsg = Message(text={'fr': [" Libération (ms) "], 'en': [" Release (ms) "]}, actualLanguage=self.langue)
-        # Cadre du curseur
-        self.resLabel = LabelFrame(self.top, text=self.relmsg.getTxt(), padx=10, pady=10)
-        # Configure le cadre
-        self.resLabel.configure(background="#202225", foreground="#b6b9be")
-        # Place le cadre dans la fenêtre
-        self.resLabel.place(x=400, y=250)
-        # Permet de changer le texte de l'application
-        self.allLabel['LabelFrame'].append([self.resLabel, self.relmsg])
-        # Création du curseur
-        relScale = Scale(self.resLabel, from_=0, to=100, resolution=1, tickinterval=10, length=300, variable=self.release)
-        # Configure le curseur
-        relScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
-        # Inclusion du curseur
-        relScale.pack()
-
-        # Cadre du curseur
-        self.ratLabel = LabelFrame(self.top, text=" Ratio ", padx=10, pady=10)
-        # Configure le cadre
-        self.ratLabel.configure(background="#202225", foreground="#b6b9be")
-        # Place le cadre dans la fenêtre
-        self.ratLabel.place(x=550, y=250)
-        # Création du curseur
-        ratScale = Scale(self.ratLabel, from_=1, to=10, resolution=1, tickinterval=1, length=300, variable=self.ratio)
-        # Configure le curseur
-        ratScale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
-        # Inclusion du curseur
-        ratScale.pack()
+        self.ThreshLabel = makeLLabel(self.top, self.fen, {'fr': [" Seuil (dB) "], 'en': [" Threshold (dB) "]}, 100, 250)
+        ThreshScale = makeScale(self.ThreshLabel, self.threshold, -20, 0, 2)
 
 
-        # Entry
+        self.attackLabel = makeLLabel(self.top, self.fen, {'fr': [" Attaque (ms) "], 'en': [" Attack (ms) "]}, 250, 250)
+        attackScale = makeScale(self.attackLabel, self.attack, 0, 100, 10)
+
+        self.resLabel = makeLLabel(self.top, self.fen, {'fr': [" Libération (ms) "], 'en': [" Release (ms) "]}, 400, 250)
+        relScale = makeScale(self.resLabel, self.release, 0, 100, 10)
+
+        self.ratLabel = makeLLabel(self.top, self.fen, {'fr': [" Ratio "], 'en': [" Ratio "]}, 550, 250)
+        ratScale = makeScale(self.ratLabel, self.ratio, 1, 10, 1)
+
 
         # Entry pour le nombre à entrer
         self.entry = Entry(self.lblFrame, width=35)
@@ -542,7 +599,9 @@ class PopupWindow():
         self.entry.configure(background="#484B52", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
 
 
-        # Bind et focus
+        # Hover
+        makeHover(self.fen, self.btn, {'fr': ["Valide vos modifications\nRaccourçi clavier : Entrée"], 'en': ['Validate your settings\nKeyboard shortcut : Return']})
+
 
         # Retourne le filtre : Bouton Entrée
         self.top.bind('<Return>', self.cleanup)
@@ -565,14 +624,28 @@ class PopupWindow():
             self.top.destroy()
             # Déclare la fermeture de la fenêtre
             self.fen.popupFen = False
+            # Retoune la valeur du seuil à la fenêtre principale
+            self.fen.threshold = int(self.threshold.get())
+            # Retoune la valeur du seuil à la fenêtre principale
+            self.fen.attack = int(self.attack.get())
+            # Retoune la valeur du seuil à la fenêtre principale
+            self.fen.release = int(self.release.get())
+            # Retoune la valeur du seuil à la fenêtre principale
+            self.fen.ratio = int(self.ratio.get())
         # Sinon
         else:
             # Pop-up d'erreur
             messagebox.showerror(self.error[self.langue][0], self.errorMsg[self.langue][4])
+            # Place la fenêtre devant la fenêtre principale
+            self.top.lift()
+            self.top.attributes('-topmost', True)
+            self.top.attributes('-topmost', False)
+            # Focus la fenêtre
+            self.top.focus_set()
 
 
 #
-# ---------- Classe PopupParamWindow -------------------------------------------------------------------
+# ---------- Classe PopupParamWindow --------------------------------------------------------------
 #
 
 
@@ -602,18 +675,11 @@ class PopupParamWindow():
         self.top.geometry(f"250x150")
         # Change le titre de la pop-up
         self.top.title(self.msg.getTxt())
-        # Permet de changer le texte contenu dans le bouton
-        self.colorlabel = Message(msg=StringVar(), text={'fr': [" Changer la couleur "], 'en': [" Change the color "]}, actualLanguage=self.langue)
-        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        colorbtn = Button(self.top, textvariable=self.colorlabel.msg, command=self.fen.getColor, width=16, height=2)
-        # Affiche le texte par défaut
-        self.colorlabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.colorlabel)
-        # Placement du bouton dans la fenêtre
-        colorbtn.place(x=70, y=25)
-        # Configure le bouton
-        colorbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+        # Boutons
+
+        colorbtn = makeLBtn(self.top, self.fen, {'fr': [" Changer la couleur "], 'en': [" Change the color "]}, 70, 25, self.fen.getColor, width=16)
+
         # La position et le drapeau à utliser
         flag, pos = self.FlagDict[self.langue]
         # Bouton "Fr / En" qui appelle switchL au clic
@@ -622,6 +688,16 @@ class PopupParamWindow():
         self.lbtn.place(x=75, y=85)
         # Configure le bouton
         self.lbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+
+        # Hovers
+
+        makeHover(self.fen, colorbtn, {'fr': ["Ouvre la fenêtre de sélection de couleur\nRaccourçi clavier : c"], 'en': ['Open the selection color window\nKeyboard shortcut : c']})
+        makeHover(self.fen, self.lbtn, {'fr': ["Change de langue\nRaccourçi clavier : Shitf"], 'en': ['Change language\nKeyboard shortcut : Shitf']})
+
+
+        # Binding et focus
+
         # Supprimer la première music de la liste : Bouton Suppr
         self.top.bind('<Delete>', self.cleanup)
         # Changer la couleur : Bouton c
@@ -659,7 +735,7 @@ class Inteface:
         # Hauteur de la fenêtre
         self.height = 700
         # Dimmensionne la fenêtre
-        #self.fen.geometry(f"{self.width}x{self.height}")
+        # self.fen.geometry(f"{self.width}x{self.height}")
         self.fen.state('zoomed')
         # Change le titre de la fenêtre
         self.fen.title("BoneSound Equalizer")
@@ -692,14 +768,9 @@ class Inteface:
         # Le nombre de filtre à appliquer
         self.nbFilter = 1
         # Le nom des erreurs
-        self.error = {'fr': ['Erreur', "Erreur de téléchargement", "Problème", "Erreur de conversion"],
-                      'en': ["Error", "Downloading error", "Problem", "Conversion error"]}
+        self.error = {'fr': ['Erreur', "Erreur de téléchargement", "Problème", "Erreur de conversion"], 'en': ["Error", "Downloading error", "Problem", "Conversion error"]}
         # Tout les messages d'erreurs
-        self.allErrorMsg = {
-            'fr':
-            ["Lien non valide", "Pas de lien", "Il n'y a aucune musique à convertir", "Le format n'est pas correct",
-             'Il faut entrer un nombre'],
-            'en': ["Invalid link", "No link", "There is no music to convert", "The format is incorrect", 'You must enter an number']}
+        self.allErrorMsg = {'fr': ["Lien non valide", "Pas de lien", "Il n'y a aucune musique à convertir", "Le format n'est pas correct", 'Il faut entrer un nombre'], 'en': ["Invalid link", "No link", "There is no music to convert", "The format is incorrect", 'You must enter an number']}
         # Ouvre l'image
         self.image = ImageTk.PhotoImage(Image.open('./image/Image.png').resize((140, 140)))
         # L'élément séléctionné dans la liste des musiques à transformer
@@ -723,7 +794,7 @@ class Inteface:
         # Fichiers actuellement ouvert dans l'application
         self.files = []
         # Différents types de musique et leur nombre de répétition du filtre associé
-        self.tags = {"A capella / A cappella": 2, "Chanson française / French song": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1, "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1, "Reggae / Reggae":1}
+        self.tags = {"A capella / A cappella": 2, "Chanson française / French song": 2, "Musique Classique / Classical Music": 2, "Drum & bass / Drum & bass": 1, "Electro / Electro": 2, "Jazz / Jazz": 2, "Lofi / Lofi": 1, "Pop  / Pop": 1,  "Rap / Rap": 1, "Rock / Rock": 1, "RnB / RnB": 1, "Hard Rock / Hard Rock": 1, "Reggae / Reggae": 1}
         # Triés dans l'ordre alphabétique
         self.tags = OrderedDict(sorted(self.tags.items(), key=lambda t: t[0]))
         # Type de musique séléctionné (IntVar permet de modifier la valeru des Radioboutons en le modifiant)
@@ -744,16 +815,7 @@ class Inteface:
 
         # Initialisation de la liste des musique à convertir
 
-        # Permet de changer le texte contenu dans le cadre
-        self.musicLabel = Message(text={'fr': [" Liste des musiques à convertir "], 'en': [' List of musics to convert ']}, actualLanguage=self.langue)
-        # Cadre contenant la liste
-        self.MusicFiles = LabelFrame(self.fen, text=self.musicLabel.getTxt(), padx=10, pady=10)
-        # Placement du cadre dans la fenêtre
-        self.MusicFiles.place(x=700, y=25)
-        # Configure l'affichage du cadre
-        self.MusicFiles.configure(background='#202225', foreground="#b6b9be")
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['LabelFrame'].append([self.MusicFiles, self.musicLabel])
+        self.MusicFiles = makeLLabel(self.fen, self, {'fr': [" Liste des musiques à convertir "], 'en': [' List of musics to convert ']}, 700, 25)
         # Liste contenant les musiques
         self.filesList = Listbox(self.MusicFiles, width=100, height=33)
         # Configure l'affichage de la listbox
@@ -764,17 +826,7 @@ class Inteface:
 
         # Initialisation de la liste des types de musiques
 
-        # Permet de changer le texte contenu dans le cadre
-        self.tagLabel = Message(text={'fr': [" Liste des différents types de musiques "], 'en': [' List of the different type of music ']}, actualLanguage=self.langue)
-        # Cadre contenant la liste
-        self.MusicTags = LabelFrame(self.fen, text=self.tagLabel.getTxt(), padx=10, pady=10)
-        # Placement du cadre dans la fenêtre
-        self.MusicTags.place(x=130, y=160)
-        # Configure l'affichage du cadre
-        self.MusicTags.configure(background='#202225', foreground="#b6b9be")
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['LabelFrame'].append([self.MusicTags, self.tagLabel])
-
+        self.MusicTags = makeLLabel(self.fen, self, {'fr': [" Liste des différents types de musiques "], 'en': [ ' List of the different type of music ']}, 130, 160)
 
         # Crée un RadioBouton ayant accès à self.MusicType pour chaque type de musique
         for x, t in enumerate(self.tags.keys()):
@@ -793,10 +845,7 @@ class Inteface:
             # Configure la style du bouton
             style.configure(style_name, foreground="#b6b9be", background='#202225', indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
             # Précise les couleurs en fonction des états du bouton
-            style.map(style_name,
-                      foreground=[('disabled', "#b6b9be"), ('pressed', self.color), ('active', self.color)],
-                      background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')],
-                      indicatorcolor=[('selected', self.color), ('pressed', self.color)])
+            style.map(style_name,  foreground=[('disabled', "#b6b9be"), ('pressed', self.color), ('active', self.color)], background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')], indicatorcolor=[('selected', self.color), ('pressed', self.color)])
             # Inclusion du bouton
             rdb.pack()
 
@@ -806,45 +855,19 @@ class Inteface:
         lbl.pack()
         lbl.configure(background="#202225")
 
-        # Permet de changer le texte contenu dans le bouton
-        self.persolabel = Message(msg=StringVar(), text={'fr': [" Personnaliser "], 'en': [" Personalize "]}, actualLanguage=self.langue)
-        # Bouton "Conversion" qui appelle conversion au clic
-        persoBtn = Button(self.MusicTags, textvariable=self.persolabel.msg, command=self.popup, width=15, height=2)
-        # Affiche le texte par défaut
-        self.persolabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.persolabel)
+
+        persoBtn = makeLBtn(self.MusicTags, self, {'fr': [" Personnaliser "], 'en': [" Personalize "]}, None, None, self.popup)
         # Placement du cadre dans la fenêtre
         persoBtn.pack(anchor='w')
-        # Configure le bouton
-        persoBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Initialisation de la barre de progression
 
-        # Permet de changer le texte contenu dans le cadre
-        self.pgbLabel = Message(text={'fr': [" Progrès de l'opération "], 'en': [' Progress of the operation ']}, actualLanguage=self.langue)
-        # Cadre contenant la barre
-        self.Pgb = LabelFrame(self.fen, text=self.pgbLabel.getTxt(), padx=10, pady=10)
-        # Placement du cadre dans la fenêtre
-        self.Pgb.place(x=75, y=600)
-        # Configure l'affichage du cadre
-        self.Pgb.configure(background='#202225', foreground="#b6b9be")
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['LabelFrame'].append([self.Pgb, self.pgbLabel])
+        self.Pgb = makeLLabel(self.fen, self, {'fr': [" Progrès de l'opération "], 'en': [' Progress of the operation ']}, 75, 600)
         # Liste de tout les messages que peut afficher le label
         allMsgPossible = {
-            'fr':
-            ["Aucune opération actuellement", "Fin du téléchargement", "Recherche du morceau",
-             "Téléchargement de {} au format mp3", "Application du gain de volume", "Sauvegarde",
-             "Fin du téléchargement de {}", "Fin du téléchargement éstimé dans {}",
-             "Télécharge: {} au format wav", "La musique à déjà été enregistrée",
-             "Téléchargement", "Application de la compression"],
-            'en':
-            ["No operation currently", "End of the download", "Search for the song",
-             "Downloading of {} at mp3 format", "Applying the volume gain", "Saving", "End of the download of",
-             "End estimated in {}", "Download: {} in wav format", "The song has already been downloaded",
-             "Downloading", "Applying compression"]}
+            'fr': ["Aucune opération actuellement", "Fin du téléchargement", "Recherche du morceau", "Téléchargement de {} au format mp3", "Application du gain de volume", "Sauvegarde", "Fin du téléchargement de {}", "Fin du téléchargement éstimé dans {}", "Télécharge: {} au format wav", "La musique à déjà été enregistrée", "Téléchargement", "Application de la compression"],
+            'en': ["No operation currently", "End of the download", "Search for the song", "Downloading of {} at mp3 format", "Applying the volume gain", "Saving", "End of the download of", "End estimated in {}", "Download: {} in wav format", "The song has already been downloaded", "Downloading", "Applying compression"]}
         # Permet de changer le texte contenu dans le label
         self.msg = Message(msg=StringVar(), text=allMsgPossible, actualLanguage=self.langue)
         # Affiche le texte par défaut
@@ -880,72 +903,24 @@ class Inteface:
         # Place le bouton
         self.lblFlag.place(x=1300, y=640)
         # Configure le bouton
-        self.lblFlag.configure(background="#202225", foreground="#b6b9be", activebackground="#202225", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+        self.lblFlag.configure(background="#202225", foreground="#b6b9be", activebackground="#202225", activeforeground="#b6b9be", borderwidth=0, highlightthickness=0)
 
 
-        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
+        # Bouton "paramètres"
         parambtn = Button(self.fen, image=self.ParamImg, command=self.popupParam, width=35, height=35)
         # Placement du bouton dans la fenêtre
         parambtn.place(x=10, y=10)
         # Configure le bouton
         parambtn.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
 
-
-        # Permet de changer le texte contenu dans le bouton
-        self.optlabel = Message(msg=StringVar(), text={'fr': [" Ouvrir un fichier "], 'en': [" Open a file "]}, actualLanguage=self.langue)
-        # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
-        openFileButton = Button(self.fen, textvariable=self.optlabel.msg, command=self.openExplorateur, width=15, height=2)
-        # Affiche le texte par défaut
-        self.optlabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.optlabel)
-        # Placement du bouton dans la fenêtre
-        openFileButton.place(x=190, y=90)
-        # Configure le bouton
-        openFileButton.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # Permet de changer le texte contenu dans le bouton
-        self.convlabel = Message(msg=StringVar(), text={'fr': [" Conversion "], 'en': [" Convert "]}, actualLanguage=self.langue)
-        # Bouton "Conversion" qui appelle conversion au clic
-        convBtn = Button(self.fen, textvariable=self.convlabel.msg, command=self.conversion, width=15, height=2)
-        # Affiche le texte par défaut
-        self.convlabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.convlabel)
-        # Placement du cadre dans la fenêtre
-        convBtn.place(x=190, y=550)
-        # Configure le bouton
-        convBtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # Permet de changer le texte contenu dans le bouton
-        self.folderLabel = Message(msg=StringVar(), text={'fr': [" Dossier de sortie "], 'en': [" Output folder "]}, actualLanguage=self.langue)
-        # Bouton "Conversion" qui appelle conversion au clic
-        folderbtn = Button(self.fen, textvariable=self.folderLabel.msg, command=self.getSaveLink, width=15, height=2)
-        # Affiche le texte par défaut
-        self.folderLabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.folderLabel)
-        # Placement du cadre dans la fenêtre
-        folderbtn.place(x=190, y=30)
-        # Configure le bouton
-        folderbtn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
-
-        # Permet de changer le texte contenu dans le bouton
-        self.supprLabel = Message(msg=StringVar(), text={'fr': [" Supprimer la musique "], 'en': [" Delete music "]}, actualLanguage=self.langue)
-        # Bouton "Suuprimer" qui appelle delMusic au clic
-        supprbtn = Button(self.fen, textvariable=self.supprLabel.msg, command=self.delMusic, width=20, height=2)
-        # Affiche le texte par défaut
-        self.supprLabel.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.supprLabel)
-        # Placement du cadre dans la fenêtre
-        supprbtn.place(x=1167, y=545)
-        # Configure le bouton
-        supprbtn.configure(background="#484B52", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
-
+        # Bouton "Ouvrir un fichier"
+        openFileButton = makeLBtn(self.fen, self, {'fr': [" Ouvrir un fichier "], 'en': [" Open a file "]}, 190, 90, self.openExplorateur)
+        # Bouton "conversion"
+        convBtn = makeLBtn(self.fen, self, {'fr': [" Conversion "], 'en': [" Convert "]}, 190, 550, self.conversion)
+        # Bouton "dossier de sortie"
+        folderbtn = makeLBtn(self.fen, self, {'fr': [" Dossier de sortie "], 'en': [" Output folder "]}, 190, 30, self.getSaveLink)
+        # Bouton "supprimer la musique"
+        supprbtn = makeLBtn(self.fen, self, {'fr': [" Supprimer la musique "],'en': [" Delete music "]}, 1167, 545, self.delMusic, width=20, bg="#484B52")
 
         # Curseur du gain de volume
 
@@ -955,78 +930,18 @@ class Inteface:
         VolumeLabel.configure(background="#202225", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
         # Place le cadre dans la fenêtre
         VolumeLabel.place(x=490, y=200)
-        # Création du curseur
-        scale = Scale(VolumeLabel, from_=-10, to=20, resolution=1, tickinterval=3, length=300, variable=self.volumeGain)
-        # Configure le curseur
-        scale.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0, troughcolor="#b6b9be", takefocus=0)
-        # Inclusion du curseur
-        scale.pack()
+        scale = makeScale(VolumeLabel, self.volumeGain, -10, 20, 3)
 
 
         # Hovers
 
-        # Permet de changer le texte contenu dans le bouton
-        self.supprhover = Message(msg=StringVar(), text={'fr': ["Supprimer la musique séléctionnée\nRaccourçi clavier : Suppr"], 'en': ['Delete selected music\nKeyboard shortcut : Suppr']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.supprhover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.supprhover)
-        # Création d'un objet HoverInfo
-        HoverInfo(supprbtn, text=self.supprhover)
-
-        # Permet de changer le texte contenu dans le bouton
-        self.outhover = Message(msg=StringVar(), text={'fr': ["Séléctionner le fichier de sortie\nRaccourçi clavier : Ctrl + s"], 'en': ['Select the output folder\nKeyboard shortcut : Ctrl + s']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.outhover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.outhover)
-        # Création d'un objet HoverInfo
-        HoverInfo(folderbtn, text=self.outhover)
-
-        # Permet de changer le texte contenu dans le bouton
-        self.convhover = Message(msg=StringVar(), text={'fr': ["Lance la conversion de la musique\nRaccourçi clavier : Entrée"], 'en': ['Start the musique conversion\nKeyboard shortcut : Return']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.convhover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.convhover)
-        # Création d'un objet HoverInfo
-        HoverInfo(convBtn, text=self.convhover)
-
-        # Permet de changer le texte contenu dans le bouton
-        self.paramhover = Message(msg=StringVar(), text={'fr': ["Ouvre la fenêtre des paramètres\nRaccourçi clavier : p"], 'en': ['Open the settings window\nKeyboard shortcut : p']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.paramhover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.paramhover)
-        # Création d'un objet HoverInfo
-        HoverInfo(parambtn, text=self.paramhover)
-
-        # Permet de changer le texte contenu dans le bouton
-        self.exphover = Message(msg=StringVar(), text={'fr': ["Ouvre la fenêtre de séléction de la musique\nRaccourçi clavier : Ctrl + o"], 'en': ['Open the music selection window\nKeyboard shortcut : Ctrl + o']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.exphover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.exphover)
-        # Création d'un objet HoverInfo
-        HoverInfo(openFileButton, text=self.exphover)
-
-        # Permet de changer le texte contenu dans le bouton
-        self.lphover = Message(msg=StringVar(), text={'fr': ["Change de langue\nRaccourçi clavier : Ctrl + o"], 'en': ['Change language\nKeyboard shortcut : Ctrl + o']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.lphover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.lphover)
-        # Création d'un objet HoverInfo
-        HoverInfo(self.lblFlag, text=self.lphover)
-
-        # Permet de changer le texte contenu dans le bouton
-        self.persophover = Message(msg=StringVar(), text={'fr': ["Ouvre la fenêtre de personnalisation\nRaccourçi clavier : Ctrl + o"], 'en': ['Open the personailze window\nKeyboard shortcut : Ctrl + o']}, actualLanguage=self.langue)
-        # Affiche le texte par défaut
-        self.persophover.update()
-        # Ajoute à la liste des objets qui peuvent changer de texte
-        self.alltxtObject['Stringvar'].append(self.persophover)
-        # Création d'un objet HoverInfo
-        HoverInfo(persoBtn, text=self.persophover)
+        makeHover(self, supprbtn, {'fr': ["Supprimer la musique séléctionnée\nRaccourçi clavier : Suppr"], 'en': ['Delete selected music\nKeyboard shortcut : Suppr']})
+        makeHover(self, folderbtn, {'fr': ["Séléctionner le fichier de sortie\nRaccourçi clavier : Ctrl + s"], 'en': ['Select the output folder\nKeyboard shortcut : Ctrl + s']})
+        makeHover(self, convBtn, {'fr': ["Lance la conversion de la musique\nRaccourçi clavier : Entrée"], 'en': ['Start the musique conversion\nKeyboard shortcut : Return']})
+        makeHover(self, parambtn, {'fr': ["Ouvre la fenêtre des paramètres\nRaccourçi clavier : p"], 'en': ['Open the settings window\nKeyboard shortcut : p']})
+        makeHover(self, openFileButton, {'fr': ["Ouvre la fenêtre de séléction de la musique\nRaccourçi clavier : Ctrl + o"], 'en': ['Open the music selection window\nKeyboard shortcut : Ctrl + o']})
+        makeHover(self, self.lblFlag, {'fr': ["Change de langue\nRaccourçi clavier : Ctrl + o"], 'en': ['Change language\nKeyboard shortcut : Ctrl + o']})
+        makeHover(self, persoBtn, {'fr': ["Ouvre la fenêtre de personnalisation\nRaccourçi clavier : Shitf"], 'en': ['Open the personailze window\nKeyboard shortcut : Shitf']})
 
 
         # Raccourci clavier
@@ -1135,13 +1050,9 @@ class Inteface:
             # Le nom du bouton
             style_name = rdb.winfo_class()
             # Configure la style du bouton
-            style.configure(style_name, foreground="#b6b9be", background='#202225',
-                            indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
+            style.configure(style_name, foreground="#b6b9be", background='#202225', indicatorcolor="#202225", borderwidth=0, selectcolor="#FAA61A")
             # Précise les couleurs en fonction des états du bouton
-            style.map(style_name,
-                      foreground=[('disabled', "#b6b9be"), ('pressed', self.color), ('active', self.color)],
-                      background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')],
-                      indicatorcolor=[('selected', self.color), ('pressed', self.color)])
+            style.map(style_name, foreground=[('disabled', "#b6b9be"), ('pressed', self.color), ('active', self.color)], background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')], indicatorcolor=[('selected', self.color), ('pressed', self.color)])
             # Configure le style du bouton
             rdb.configure(style=style_name)
 
@@ -1272,6 +1183,11 @@ class Inteface:
             self.applyingPerso = False
             # lance l'equalizer
             Equalizer(nbRep, self, gain).start()
+            # Message d'information
+            infoTitle = {"fr": "Conversion terminée", 'en': 'Conversion completed'}
+            infoMsg = {'fr': "La conversion est terminée", 'en': 'The conversion is complete'}
+            # Affiche un message de fin de conversion
+            messagebox.showinfo(infoTitle[self.langue], infoMsg[self.langue])
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
