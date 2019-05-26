@@ -565,29 +565,38 @@ class PopupWindow():
 
         # Boutons
 
-        self.lblFrame = makeLLabel(self.top, self.fen, {'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, 30, 20)
+        self.lblFrame = makeLLabel(self.top, self.fen, {'fr': [" Entrer le nombre de filtre(s) à appliquer "], 'en': [" Enter the number of filter(s) to apply "]}, 250, 20)
 
         # Bouton Ok
         self.btn = Button(self.top, text='Ok', command=self.cleanup, width=15, height=2)
         # Placement du bouton
-        self.btn.place(x=90, y=110)
+        self.btn.place(x=310, y=110)
         # Configuration du bouton
         self.btn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
+
+        # Label
+        lblmsg = Message(msg=StringVar(), text={'fr': ["Paramètres du compresseur"], 'en': ["Compressor settings"]}, actualLanguage=self.langue)
+        lblmsg.update()
+        self.alltxtObject['Stringvar'].append(lblmsg)
+        lbl = Label(self.top, textvariable=lblmsg.msg, width=25, height=2)
+        lbl.place(x=280, y=200)
+        # Configuration du bouton
+        lbl.configure(background="#202225", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0)
 
 
         # Scales
 
-        self.ThreshLabel = makeLLabel(self.top, self.fen, {'fr': [" Seuil (dB) "], 'en': [" Threshold (dB) "]}, 100, 250)
+        self.ThreshLabel = makeLLabel(self.top, self.fen, {'fr': [" Seuil (dB) "], 'en': [" Threshold (dB) "]}, 100, 280)
         ThreshScale = makeScale(self.ThreshLabel, self.threshold, -20, 0, 2)
 
 
-        self.attackLabel = makeLLabel(self.top, self.fen, {'fr': [" Attaque (ms) "], 'en': [" Attack (ms) "]}, 250, 250)
+        self.attackLabel = makeLLabel(self.top, self.fen, {'fr': [" Attaque (ms) "], 'en': [" Attack (ms) "]}, 250, 280)
         attackScale = makeScale(self.attackLabel, self.attack, 0, 100, 10)
 
-        self.resLabel = makeLLabel(self.top, self.fen, {'fr': [" Libération (ms) "], 'en': [" Release (ms) "]}, 400, 250)
+        self.resLabel = makeLLabel(self.top, self.fen, {'fr': [" Libération (ms) "], 'en': [" Release (ms) "]}, 400, 280)
         relScale = makeScale(self.resLabel, self.release, 0, 100, 10)
 
-        self.ratLabel = makeLLabel(self.top, self.fen, {'fr': [" Ratio "], 'en': [" Ratio "]}, 550, 250)
+        self.ratLabel = makeLLabel(self.top, self.fen, {'fr': [" Ratio "], 'en': [" Ratio "]}, 550, 280)
         ratScale = makeScale(self.ratLabel, self.ratio, 1, 10, 1)
 
 
