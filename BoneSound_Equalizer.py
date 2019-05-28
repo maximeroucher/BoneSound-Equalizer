@@ -84,7 +84,6 @@ def makeScale(fen, param, low, high, res):
     return scl
 
 
-
 #
 # ---------- Classe Message -----------------------------------------------------------------------
 #
@@ -389,7 +388,7 @@ class Equalizer(Thread):
         # Nom du fichier à transformer (déjà en wav)
         self.filename = self.get_song(filename)
         # Nom de fichier en sortie
-        ext = filename.split("\\")[-1].split('.')[0]
+        ext = ".".join(filename.split("\\")[-1].split('.')[:-1])
         self.outname = f'{self.out}/out - {ext}.wav'
         # Change le message de la fenêtre
         self.msg.changeMsg(4)
@@ -409,7 +408,7 @@ class Equalizer(Thread):
         # Si la musique n'est pas en .wav
         if path[-4:] != ".wav":
             # Récupère la nom de la musique sans l'extension
-            ext = path.split("\\")[-1].split('.')[0]
+            ext = ".".join(path.split("\\")[-1].split('.')[:-1])
             # Si un fichier wav avec le même nom existe
             if f'{ext}.wav' in os.listdir(self.out):
                 # Retourne le fichier wav pour éciter la conversion
@@ -429,8 +428,9 @@ class Equalizer(Thread):
                     path = path2
                     # Lieu de sauvgarde du fichier une fois converti en .wav
                     outname = f'{self.out}/{ext}.wav'
-                    # Convertit le fchier en .wav
-                    subprocess.call(f'ffmpeg -y -i "{path}" -vn "{outname}"')
+                    # Lance la commande sans créer de pop-up externe
+                    p = subprocess.Popen(f'ffmpeg -y -i "{path}" -vn "{outname}"', stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p_out, p_err = p.communicate(input=None)
                     # Si il faut rechanger le nom
                     if changeBack:
                         # Renomme les deux fichiers
@@ -513,6 +513,21 @@ class Equalizer(Thread):
         if self.delWav:
             # Récupère et supprime le fichier
             os.remove("".join(self.outname.split("out - ")))
+        # Nom de fichier en sortie
+        ext = ".".join(self.outname.split("/out - ")[-1].split('.')[:-1])
+        correct = f'{self.out}/out - {ext}.mp3'
+        # Convertit le fchier en .wav
+        p = subprocess.Popen(f'ffmpeg -y -i "{self.outname}" -vn "{correct}"', stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p_out, p_err = p.communicate(input=None)
+        # Supprimer
+        os.remove(self.outname)
+        # Message d'information
+        infoTitle = {"fr": "Conversion terminée", 'en': 'Conversion completed'}
+        infoMsg = {'fr': "La conversion est terminée", 'en': 'The conversion is complete'}
+        # La langue de la fenêtre principale
+        self.langue = self.fen.langue
+        # Affiche un message de fin de conversion
+        messagebox.showinfo(infoTitle[self.langue], infoMsg[self.langue])
 
 
 #
@@ -796,6 +811,8 @@ class Inteface:
         self.attack = 5
         # Le delai d'attente après une valuer inférieur au seuil et l'arrêt de la rédcution
         self.release = 50
+        # La liste des formats de musiques suppotées
+        self.AllMusicExtPossibles = [".wav", ".mp3"]
 
 
         # Initialisation des variables
@@ -1192,11 +1209,6 @@ class Inteface:
             self.applyingPerso = False
             # lance l'equalizer
             Equalizer(nbRep, self, gain).start()
-            # Message d'information
-            infoTitle = {"fr": "Conversion terminée", 'en': 'Conversion completed'}
-            infoMsg = {'fr': "La conversion est terminée", 'en': 'The conversion is complete'}
-            # Affiche un message de fin de conversion
-            messagebox.showinfo(infoTitle[self.langue], infoMsg[self.langue])
         # Si il y a une erreur
         except Exception as e:
             # Nom de l'erreur
@@ -1218,7 +1230,7 @@ class Inteface:
             # Pour chaque fichier de la liste
             for f in files:
                 # Si le fichier est un fichier wav est n'est pas déjà dans la liste
-                if f[-4:] in [".wav", ".mp3"]:
+                if f[-4:] in self.AllMusicExtPossibles:
                     if f not in self.files:
                         # Ajoute le fichier à la liste des fichiers à convertir
                         self.files.append(f)
@@ -1249,3 +1261,5 @@ class Inteface:
 
 if __name__ == "__main__":
     Inteface().run()
+
+    # TODO: langue, limiter
