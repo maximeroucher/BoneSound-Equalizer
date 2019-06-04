@@ -21,7 +21,7 @@ _If you want to change an image, name it with the name of the one you want to ch
 
 ### Aperçu de l'application / App Preview
 
-![Alt text](./image/Screen.png "BoneSound Equalizer")
+![Alt text](Screen.png "BoneSound Equalizer")
 
 ### Installation / Installing
 
