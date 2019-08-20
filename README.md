@@ -105,6 +105,8 @@ _Don't forget to add ffmpeg.exe, your icon and the image folder to make the conv
 
 - Le convertisseur de son : [FFMPEG](https://ffmpeg.org/)
 - The Sound converter : [FFMPEG](https://ffmpeg.org/)
+- Les icônes : [FlatIcon](https://www.flaticon.com/)
+- Icons : [FlatIcon](https://www.flaticon.com/)
 
 ## Auteur / Author
 

@@ -15,6 +15,7 @@ import subprocess
 import sys
 import urllib
 import time
+import webbrowser
 from collections import OrderedDict
 from threading import Thread
 from tkinter import Button, Canvas, Entry, Frame, IntVar, Label, LabelFrame, Listbox, Menu, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox, ttk
@@ -38,6 +39,27 @@ def makeHover(fen, btn, txt, n, return_msg=False):
     """ Créer un hover pour le widget donné
     itype : Tk() / Tk.TopLevel(), Tk.Button(), {code de la lange: [messages]}, int (le numéro associé au message)
     """
+    if n == None:
+        msg = txt
+    else:
+        # Permet de changer le texte contenu dans le bouton
+        msg = Message(msg=StringVar(), text=txt, actualLanguage=fen.langue)
+        # Affiche le texte par défaut
+        msg.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        fen.alltxtObject['Stringvar'].append([msg, 'hovers', n])
+    # Création d'un objet HoverInfo
+    HoverInfo(btn, text=msg)
+    # Si le message doit être renvoyé
+    if return_msg:
+        # Retourne le message
+        return msg
+
+
+def makeHoverMenu(fen, btn, txt, n):
+    """ Créer un hover pour le widget donné
+    itype : Tk() / Tk.TopLevel(), Tk.Button(), {code de la lange: [messages]}, int (le numéro associé au message)
+    """
     # Permet de changer le texte contenu dans le bouton
     msg = Message(msg=StringVar(), text=txt, actualLanguage=fen.langue)
     # Affiche le texte par défaut
@@ -45,11 +67,7 @@ def makeHover(fen, btn, txt, n, return_msg=False):
     # Ajoute à la liste des objets qui peuvent changer de texte
     fen.alltxtObject['Stringvar'].append([msg, 'hovers', n])
     # Création d'un objet HoverInfo
-    HoverInfo(btn, text=msg)
-    # Si le message doit être renvoyé
-    if return_msg:
-        # Retourne le message
-        return msg
+    HoverMenu(btn, msg, fen)
 
 
 def makeLBtn(fen, scr, txt, x, y, command, n, width=15, height=2, bg="#40444B", fg="#b6b9be"):
@@ -110,12 +128,6 @@ def makeRdbList(fen, src, liste):
     """ Création d'une liste de radioboutons
     itype : Tk() / Tk.TopLevel(), Interface() / PersoPopup() / ParamPopup(), {}
     """
-    # Le nom du bouton
-    style_name = Radiobutton().winfo_class()
-    # Configure la style du bouton
-    src.style.configure(style_name, foreground="#b6b9be", background='#202225', indicatorcolor="#202225", borderwidth=1, selectcolor="#FAA61A", justify='right')
-    # Précise les couleurs en fonction des états du bouton
-    src.style.map(style_name,  foreground=[('disabled', "#b6b9be"), ('pressed', src.color), ('active', src.color)], background=[('disabled', '#202225'), ('pressed', '!focus', '#202225'), ('active', '#202225')], indicatorcolor=[('selected', src.color), ('pressed', src.color)])
     # Compteur des radioboutons
     x = 0
     # Pour chaque langue de la liste des drapeaux
@@ -219,8 +231,9 @@ class HoverInfo():
         self.widget = widget
         # Le texte à afficher
         self.text = text
+        if isinstance(self.text, Message):
         # Met le texte par défaut
-        self.text.update()
+            self.text.update()
         # Quand la souris passe sur le bouton, active la fonction
         self.widget.bind("<Enter>", self.onEnter)
         # Quand la souris part du bouton, active la fonction
@@ -325,8 +338,12 @@ class HoverInfo():
         self.tw.wm_overrideredirect(True)
         # Création de l'emplacement pour le texte
         win = Frame(self.tw, background=bg, borderwidth=0)
-        # Mise en place du texte à afficher
-        label = ttk.Label(win, textvariable=self.text.msg, justify='left', background=bg, foreground=self.fg,  relief='solid', borderwidth=0, wraplength=self.wraplength)
+        if isinstance(self.text, Message):
+            # Mise en place du texte à afficher
+            label = ttk.Label(win, textvariable=self.text.msg, justify='left', background=bg, foreground=self.fg, relief='solid', borderwidth=0, wraplength=self.wraplength)
+        else:
+            # Mise en place du texte à afficher
+            label = ttk.Label(win, text=self.text, justify='left', background=bg, foreground=self.fg, relief='solid', borderwidth=0, wraplength=self.wraplength)
         # Place le texte dans la zone dédiée
         label.grid(padx=(pad[0], pad[2]), pady=(pad[1], pad[3]), sticky='nsew')
         # Passe la fenêtre en mode grid pour pouvoir la placer sur l'écran
@@ -350,41 +367,202 @@ class HoverInfo():
 
 
 #
-# ---------- Classe ProgressBar -------------------------------------------------------------------
+# ---------- Classe HoverMenu ---------------------------------------------------------------------
 #
 
 
-class ProgressBar():
+class HoverMenu():
 
-    def __init__(self, fen):
-        """ Barre d'avancement, est appellé à chaque itération du téléchargement
-        itype : Tkinter.ttk.ProgressBar, Message()
+    def __init__(self, widget, text, fen):
         """
+        Message d'aide
+
+        Code source:
+
+        - https://stackoverflow.com/questions/3221956/what-is-the-simplest-way-to-make-tooltips-in-tkinter/36221216#36221216
+        - http://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
+
+        itype : tkinter.Button(), Message()
+        """
+        # Le temps avant l'affichage
+        self.waittime = 400
+        # Le longueur de la fenêtre
+        self.wraplength = 250
+        # Le bouton sur lequel le texte va s'afficher
+        self.widget = widget
+        # Le texte à afficher
+        self.text = text
+        # Met le texte par défaut
+        self.text.update()
+        # Quand la souris passe sur le bouton, active la fonction
+        self.widget.bind("<Enter>", self.onEnter)
+        # Quand la souris part du bouton, active la fonction
+        self.widget.bind("<Button-1>", self.onLeave)
+        # Quand l'utilisatuer clique sur le bouton
+        self.widget.bind("<ButtonPress>", self.onLeave)
+        # Couleur de fond du message
+        self.bg = '#36393f'
+        # Couleur du message
+        self.fg = '#b6b9be'
+        # Espace entre les bords et le texte
+        self.pad = (5, 3, 5, 3)
+        # L'identifiant du message
+        self.id = None
+        # La fenêtre comprenant le message
+        self.tw = None
         # La fenêtre principale
         self.fen = fen
-        # Barre de progression de la fenêtre
-        self.progress = self.fen.progress
-        # Message de la fenêtre
-        self.msg = self.fen.msg
 
 
-    def __call__(self, block_num, block_size, total_size):
-        """ Opération appelée à chaque itération du téléchargement
-        itype : 3 int
+    def onEnter(self, event=None):
+        """ Quand la souris passe sur le bouton
         """
-        # Niveau de progression
-        downloaded = block_num * block_size
-        # Si le téléchagement n'est pas finit
-        if downloaded < total_size:
-            # Change la barre
-            self.progress["value"] = downloaded * 100 / total_size
-        # Sinon
-        else:
-            # Change le texte et la barre
-            self.msg.changeMsg(1)
-            self.msg.update()
-            # Remet la barre à zéro
-            self.progress["value"] = 0
+        if not self.fen.flagMenu:
+            self.schedule()
+            self.fen.flagMenu = self
+
+
+    def onLeave(self, event=None):
+        """ Quand la souris part du bouton
+        """
+        self.unschedule()
+        self.hide()
+        self.fen.flagMenu = None
+
+
+    def schedule(self):
+        """ Réinitialise l'identifiant du message
+        """
+        self.unschedule()
+        self.id = self.widget.after(self.waittime, self.show)
+
+
+    def unschedule(self):
+        """ Supprime l'identifiant du message
+        """
+        id_ = self.id
+        self.id = None
+        if id_:
+            self.widget.after_cancel(id_)
+
+
+    def show(self):
+        """ Affiche le message
+        """
+
+        def tip_pos_calculator(widget, label, tip_delta=(10, 5), pad=(5, 3, 5, 3), h=40, w=100):
+            """ calcule l'emplacement du message à partir de celui de la souris
+            """
+            # récupération des dimmensions de l'écran
+            s_width, s_height = widget.winfo_screenwidth(), widget.winfo_screenheight()
+            # Calcul des dimensions de la fenêtre
+            width, height = (pad[0] + w + pad[2], pad[1] + h + pad[3])
+            # Récupération des coordonnées de la souris
+            mouse_x, mouse_y = widget.winfo_pointerxy()
+            # Décale l'emplacement de la fenêtre pour ne pas être géné par la souris (x1 et y1 sont les coordonnées du coin supérieur gauche de la fenêtre)
+            x1, y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
+            # Calcul des coordonnées du coin inférieur droit de la fenêtre
+            x2, y2 = x1 + width, y1 + height
+
+            # Calcul de la distance entre le bord droit de l'écran et celui de la fenêtre
+            x_delta = x2 - s_width
+            # Si la fenêtre sort de l'écran
+            if x_delta < 0:
+                # Colle le fenêtre au bord droit de l'écran
+                x_delta = 0
+
+            # Calcul de la distance entre le bord supérieur de l'écran et celui de la fenêtre
+            y_delta = y2 - s_height
+            # Si la fenêtre sort de l'écran
+            if y_delta < 0:
+                # Colle le fenêtre au bord droit de l'écran
+                y_delta = 0
+
+            # Si le coin supérieur droit de la fenêtre n'est pas dans celui de l'écran
+            if (x_delta, y_delta) != (0, 0):
+                if x_delta:
+                    x1 = mouse_x - tip_delta[0] - width
+                if y_delta:
+                    y1 = mouse_y - tip_delta[1] - height
+            if y1 < 0:
+                y1 = 0
+
+            return x1, y1
+
+        # Couleur du fond
+        bg = self.bg
+        # Marge de la fenêtre
+        pad = self.pad
+        # Le bouton duquel le fenêtre doit appaître
+        widget = self.widget
+        # Création d'une pop-up
+        self.tw = Toplevel(widget)
+        # Enlève les boutons fermer, réduire et plein écran de la fenêtre
+        self.tw.wm_overrideredirect(True)
+        # Création de l'emplacement pour le texte
+        win = Frame(self.tw, background=bg, borderwidth=0)
+        # cadre autour des boutons
+        label = LabelFrame(win)
+        # Configuration du cadre
+        label.configure(background="#40444B", foreground="#b6b9be", borderwidth=0, highlightthickness=0)
+        # Liste des radioboutons
+        self.rdblist = []
+        h = 40 * len(self.fen.languages)
+        # Pour chaque langue disponible
+        for l in self.fen.languages:
+            # RadioBouton affichant la langue et son drapeau
+            btn = Button(label, text="   " + self.fen.allLanguages[l]['nom'][0] , image=self.fen.FlagDict[l], compound='left', width=100, height=40, command=self.switchfenLang) #variable=self.selectedLanguage, value=list(self.fen.languages.keys()).index(l) + 1
+            # Inclusion du bouton
+            btn.pack()
+            # Configuration du bouton
+            btn.configure(background="#40444B", foreground="#b6b9be", activebackground="#40444B", activeforeground="#b6b9be",  borderwidth=0, highlightthickness=0, justify='center')
+            # Ajout à la liste
+            self.rdblist.append(btn)
+        # Place le texte dans la zone dédiée
+        label.grid(padx=(pad[0], pad[2]), pady=(pad[1], pad[3]), sticky='nsew')
+        # Passe la fenêtre en mode grid pour pouvoir la placer sur l'écran
+        win.grid()
+        # Calcul des coordonnées de la fenêtre
+        x, y = tip_pos_calculator(widget, label, h=h)
+        # Dimensionne la fenêtre
+        self.tw.wm_geometry(f"+{x}+{y}")
+
+
+    def switchfenLang(self):
+        """ CHange la langue de l'applucation
+        """
+        # Par défaut, la langue de l'application
+        l = self.fen.langue
+        # La coordonnée y de la souris au clic
+        my = self.fen.fen.winfo_pointery()
+        # Pour chaque boutons
+        for x, btn in enumerate(self.rdblist):
+            # La coordonnée y des boutons
+            wy = btn.winfo_rooty()
+            # La hauteur du boutons
+            h = btn.winfo_height()
+            # Si la position de la souris est entre les deux bords du boutons
+            if wy < my and wy + h > my:
+                # La langue est celle du bouton
+                l = list(self.fen.languages.keys())[x]
+        # Change la langue de l'application
+        self.fen.langue = l
+        # Change la langue des widgets
+        self.fen.switchL()
+        # Ferme le menu
+        self.onLeave()
+
+
+    def hide(self):
+        # Appropriation de la fenêtre
+        tw = self.tw
+        # Si elle existe
+        if tw:
+            # Déstruction de la fenêtre
+            tw.destroy()
+        # La fenêtre n'esiste plus
+        self.tw = None
+        del self
 
 
 #
@@ -591,6 +769,9 @@ class Equalizer(Thread):
         self.progress['value'] = 0
         # Affiche un message de fin de conversion
         messagebox.showinfo(self.languages[self.langue]['infoTitle'][0], self.languages[self.langue]['infoMsg'][0])
+        # Ouvre le fichier
+        os.startfile(correct)
+        # Supprime l'objet
         del self
 
 
@@ -652,7 +833,7 @@ class LanguageManager(Thread):
         # Couleur de fond de la fenêtre
         self.top.configure(background='#202225')
         # Taille de fond de la fenêtre
-        self.top.geometry(f"400x180")
+        self.top.minsize(400, 180)
         # Les messages
         self.tradMsg = Message(text={l: [self.languages[l]['popup'][4]] for l in self.languages}, actualLanguage=self.l)
         # Le titre de la fenêtre
@@ -923,7 +1104,7 @@ class PersoPopup():
         # Couleur de fond de la fenêtre
         self.top.configure(background='#202225')
         # Taille de fond de la fenêtre
-        self.top.geometry(f"300x200")
+        self.top.minsize(300, 200)
         # Change le titre de la pop-up
         self.top.title(self.msg.getTxt())
 
@@ -997,6 +1178,55 @@ class PersoPopup():
 
 
 #
+# ---------- Classe PersoMenu ---------------------------------------------------------------------
+#
+
+
+class MenuPopup():
+
+    def __init__(self, fen):
+        """ Pop-up pour demander le nombre de filtre à appliquer
+        itype : Interface()
+        """
+
+        # Récupération des varriables de la fenêtre principale
+
+        # La fenêtre derrière
+        self.fen = fen
+        # Message de la fenêtre
+        self.msg = self.fen.menuMsg
+        # La langue de la fenêtre
+        self.langue = self.fen.langue
+        # Titre de la fenêtre d'erreur
+        self.error = self.fen.error
+        # Titre de la fenêtre d'erreur
+        self.errorMsg = self.fen.allErrorMsg
+        # Liste pour changer la langue du texte
+        self.alltxtObject = self.fen.alltxtObject
+        # Les langues de la fenêtre principale
+        self.languages = self.fen.languages
+        # la valeur du nombre de filtre à appliquer
+        self.value = None
+
+        # Initialisation de la fenêtre
+
+        # Fenêtre au dessus de la principale
+        self.top = Toplevel(self.fen.fen)
+        # Couleur de fond de la fenêtre
+        self.top.configure(background='#202225')
+        # Taille de fond de la fenêtre
+        self.top.minsize(300, 200)
+        # Change le titre de la pop-up
+        self.top.title(self.msg.getTxt())
+
+
+    def cleanup(self, event=None):
+        """ Au clic sur le bouton Ok
+        """
+        self.top.destroy()
+
+
+#
 # ---------- Classe ParamPopup --------------------------------------------------------------------
 #
 
@@ -1045,8 +1275,8 @@ class ParamPopup():
         self.top = Toplevel(self.fen.fen)
         # Couleur de fond de la fenêtre
         self.top.configure(background='#202225')
-        # Taille de fond de la fenêtre
-        self.top.geometry(f"1335x600")
+        # La taille minimale de la fenêtre
+        self.top.minsize(1335, 600)
         # Change le titre de la pop-up
         self.top.title(self.msg.getTxt())
 
@@ -1153,7 +1383,8 @@ class Interface:
         self.width = 1366
         # Hauteur de la fenêtre
         self.height = 768
-        self.fen.geometry(f'{self.width}x{self.height}')
+        # La taille minimale de la fenêtre
+        self.fen.minsize(self.width, self.height)
         # Dimmensionne la fenêtre
         #self.fen.state('zoomed')
         # Change le titre de la fenêtre
@@ -1199,6 +1430,8 @@ class Interface:
         self.allColorObjet = []
         # Image des paramètres
         self.ParamImg = ImageTk.PhotoImage(Image.open('./image/Param.png').resize((35, 35)))
+        # Le menu
+        self.MenuImg = ImageTk.PhotoImage(Image.open('./image/menu.png').resize((36, 36)))
         # Change l'icone au changement de langue
         self.FlagDict = self.loadIcons()
         # Si l'utilisateur rentre une valeur du nombre de filtre à appliquer
@@ -1219,6 +1452,8 @@ class Interface:
         self.popupFen = False
         # Si la fenêtre "paramètres" est ouverte
         self.popupParamFen = False
+        # Si la fenêtre "menu" est ouverte
+        self.popupMenuFen = False
         # Le seuil maximal de compression du volume
         self.threshold = -20
         # Le ratio de compression (par analogie avec un compresseur physique)
@@ -1231,6 +1466,8 @@ class Interface:
         self.AllMusicExtPossibles = [".wav", ".mp3"]
         # La pop-up de traduction de l'application
         self.lm = None
+        # Le menu des drapeaux
+        self.flagMenu = None
 
 
         # Le style
@@ -1247,13 +1484,22 @@ class Interface:
 
         # Création des widgets de la fenêtre
 
+        self.labelImageRatio = [.329, .039]
         # Image qui change de couleur
-        self.LabelImage = Label(self.fen, image=self.image, width=140, height=140, borderwidth=0, highlightthickness=0, background=self.color)
+        self.LabelImage = Button(self.fen, image=self.image, width=140, height=140, background=self.color, command=self.open_site)
         # Ajoute l'image à la fenêtre
         self.LabelImage.place(x=450, y=30)
+        # Configure le bouton
+        self.LabelImage.configure(background=self.color, activebackground=self.color,  borderwidth=0, highlightthickness=0)
+        # Affcihe le lien de la page au survol
+        makeHover(self.fen, self.LabelImage, "https://bonesound.wordpress.com/", None)
 
+
+        self.MusicFilesRatio = [.512, .033]
         # Initialisation de la liste des musique à convertir
         self.MusicFiles = makeLLabel(self.fen, self, {l: [self.languages[l]['tags'][0]] for l in self.languages}, 700, 25, 0)
+
+        self.filesListratio = [.073, .046]
         # Liste contenant les musiques
         self.filesList = Listbox(self.MusicFiles, width=100, height=35)
         # Configure l'affichage de la listbox
@@ -1263,6 +1509,7 @@ class Interface:
 
         # Initialisation de la liste des types de musiques
 
+        self.MusictagsRatio = [.088, .234]
         self.MusicTags = makeLLabel(self.fen, self, {l: [self.languages[l]['tags'][1]] for l in self.languages}, 120, 180, 1)
 
         # Crée un RadioBouton ayant accès à self.MusicType pour chaque type de musique
@@ -1291,6 +1538,7 @@ class Interface:
 
         # Initialisation de la barre de progression
 
+        self.PgbRatio = [.055, .846]
         # Le cadre autour de la barre
         self.Pgb = makeLLabel(self.fen, self, {l: [self.languages[l]['tags'][2]] for l in self.languages}, 75, 650, 2)
         # Permet de changer le texte contenu dans le label
@@ -1305,6 +1553,7 @@ class Interface:
         operatingLabel.pack()
         # Configure l'affichage du label
         operatingLabel.configure(background='#202225', foreground="#b6b9be")
+        self.progressbarRatio = .842
         # Barre de progression qui suit l'évolution des différentes opérations de l'application
         self.progressbar = Progressbar(self.Pgb, orient="horizontal", length=1150, mode="determinate", style="red.Horizontal.TProgressbar")
         # La valeur maximale de la barre est 100 (100%)
@@ -1317,6 +1566,7 @@ class Interface:
 
         # Bouton pour changer la langue
         flag = self.FlagDict[self.langue]
+        self.lblFlagRatio = [.952, .912]
         # Création du bouton
         self.lblFlag = Button(self.fen, image=flag, width=35, height=35, background='#202225', command=self.switchLwithoutL)
         # Place le bouton
@@ -1324,48 +1574,66 @@ class Interface:
         # Configure le bouton
         self.lblFlag.configure(background="#202225", foreground="#b6b9be", activebackground="#202225", activeforeground="#b6b9be", borderwidth=0, highlightthickness=0)
 
-        # Bouton "paramètres"
-        parambtn = Button(self.fen, image=self.ParamImg, command=self.popupParam, width=35, height=35)
-        # Placement du bouton dans la fenêtre
-        parambtn.place(x=10, y=10)
+
+        self.menubtnRatio = [.007, .013]
+        # Bouton "menu"
+        self.menubtn = Button(self.fen, image=self.MenuImg, command=self.popupMenu, width=36, height=36)
+        # Placement du bouton
+        self.menubtn.place(x=10, y=10)
         # Configure le bouton
-        parambtn.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
+        self.menubtn.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
+
+
+        self.parambtnRatio = [.007, .941]
+        # Bouton "paramètres"
+        self.parambtn = Button(self.fen, image=self.ParamImg, command=self.popupParam, width=35, height=35)
+        # Placement du bouton dans la fenêtre
+        self.parambtn.place(x=10, y=723)
+        # Configure le bouton
+        self.parambtn.configure(background="#202225", activebackground="#202225", borderwidth=0, highlightthickness=0)
 
         # Bouton "Ouvrir un fichier"
-        openFileButton = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][1]] for l in self.languages}, 190, 100, self.openExplorateur, 1)
+        self.openfileRatio = [.139, .130]
+        self.openFileButton = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][1]] for l in self.languages}, 190, 100, self.openExplorateur, 1)
         # Bouton "conversion"
-        convBtn = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][3]] for l in self.languages}, 190, 580, self.conversion, 3)
+        self.convbtnRatio = [.139, .755]
+        self.convBtn = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][3]] for l in self.languages}, 190, 580, self.conversion, 3)
         # Bouton "dossier de sortie"
-        folderbtn = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][0]] for l in self.languages}, 190, 30, self.getSaveLink, 0)
+        self.folderbtnRatio = [.139, .039]
+        self.folderbtn = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][0]] for l in self.languages}, 190, 30, self.getSaveLink, 0)
         # Bouton "supprimer la musique"
-        supprbtn = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][4]] for l in self.languages}, 1167, 575, self.delMusic, 4, width=20, bg="#484B52")
+        self.supprbtnRatio = [.850, .747]
+        self.supprbtn = makeLBtn(self.fen, self, {l: [self.languages[l]['btn'][4]] for l in self.languages}, 1150, 580, self.delMusic, 4, width=20, bg="#484B52")
 
+        self.VolumeLabelRatio = [.359, .260]
         # Cadre contenant le scale
-        VolumeLabel = makeLLabel(self.fen, self, {l: [self.languages[l]['tags'][4]] for l in self.languages}, 490, 200, 4)
+        self.VolumeLabel = makeLLabel(self.fen, self, {l: [self.languages[l]['tags'][4]] for l in self.languages}, 490, 200, 4)
         # Configure des paramètres suplémentaires
-        VolumeLabel.configure(borderwidth=0, highlightthickness=0, labelanchor='n', width=120, height=400)
+        self.VolumeLabel.configure(borderwidth=0, highlightthickness=0, labelanchor='n', width=120, height=400)
         # Force la fenêtre
-        VolumeLabel.pack_propagate(0)
+        self.VolumeLabel.pack_propagate(0)
         # Curseur du gain de volume
-        scale = makeScale(VolumeLabel, self.volumeGain, -10, 20, 3)
+        scale = makeScale(self.VolumeLabel, self.volumeGain, -10, 20, 3)
 
 
         # Hovers
 
         # Message sur le bouton "supprimer la musique"
-        makeHover(self, supprbtn, {l: [self.languages[l]['hovers'][0]] for l in self.languages}, 0)
+        makeHover(self, self.supprbtn, {l: [self.languages[l]['hovers'][0]] for l in self.languages}, 0)
         # Message sur le bouton "dossier de sauvegarde"
-        makeHover(self, folderbtn, {l: [self.languages[l]['hovers'][1]] for l in self.languages}, 1)
+        makeHover(self, self.folderbtn, {l: [self.languages[l]['hovers'][1]] for l in self.languages}, 1)
         # Message sur le bouton "conversion"
-        makeHover(self, convBtn, {l: [self.languages[l]['hovers'][2]] for l in self.languages}, 2)
+        makeHover(self, self.convBtn, {l: [self.languages[l]['hovers'][2]] for l in self.languages}, 2)
         # Message sur le bouton paramètres
-        makeHover(self, parambtn, {l: [self.languages[l]['hovers'][3]] for l in self.languages}, 3)
+        makeHover(self, self.parambtn, {l: [self.languages[l]['hovers'][3]] for l in self.languages}, 3)
         # Message sur le bouton "ouvrir un fichier"
-        makeHover(self, openFileButton, {l: [self.languages[l]['hovers'][4]] for l in self.languages}, 4)
-        # Message sur le bouton drapeau
-        makeHover(self, self.lblFlag, {l: [self.languages[l]['hovers'][6]] for l in self.languages}, 6)
+        makeHover(self, self.openFileButton, {l: [self.languages[l]['hovers'][4]] for l in self.languages}, 4)
         # Message sur le bouton "personnaliser"
         makeHover(self, persoBtn, {l: [self.languages[l]['hovers'][7]] for l in self.languages}, 7)
+        # Message sur le bouton menu
+        makeHover(self, self.menubtn, {l: [self.languages[l]['hovers'][10]] for l in self.languages}, 10)
+        # Message sur le bouton drapeau
+        makeHoverMenu(self, self.lblFlag, {l: [self.languages[l]['hovers'][6]] for l in self.languages}, 6)
 
 
         # Raccourci clavier
@@ -1384,6 +1652,75 @@ class Interface:
         self.fen.bind('<Shift_L>', self.switchLwithoutL)
         # Change la langue : Bouton Tab
         self.fen.bind('<Control-p>', self.popup)
+        # Ouvre le site : Bouton Ctrl + n
+        self.fen.bind('<Control-n>', self.open_site)
+        # Si on clique à côté du menu, le supprime
+        self.fen.bind("<Button-1>", self.del_flag_menu)
+        # Tracking du changement de dimension
+        self.fen.bind("<Configure>", self.changeSize)
+        # Si on clicque sur "m"
+        self.fen.bind("<m>", self.popupMenu)
+
+
+    def changeSize(self, event=None):
+        # Si il s'agit d'un changement de largeur
+        w = self.fen.winfo_width()
+        h = self.fen.winfo_height()
+        if w != self.width or h != self.height:
+            # Logo
+            self.LabelImage.place(x=self.labelImageRatio[0] * w, y = self.labelImageRatio[1] * h)
+
+            # MusicFile
+            self.MusicFiles.place(x=self.MusicFilesRatio[0] * w, y=self.MusicFilesRatio[1] * h)
+
+            # filesList
+            self.filesList['width'] = int(self.filesListratio[0] * w)
+            self.filesList['height'] = int(self.filesListratio[1] * h)
+
+            # MusicTags
+            self.MusicTags.place(x=self.MusictagsRatio[0] * w, y=self.MusictagsRatio[1] * h)
+
+            # Pgb
+            self.Pgb.place(x=self.PgbRatio[0] * w, y=self.PgbRatio[1] * h)
+
+            # Progressbar
+            self.progressbar['length'] = int(self.progressbarRatio * w)
+
+            # Drapeau
+            self.lblFlag.place(x=self.lblFlagRatio[0] * w, y=self.lblFlagRatio[1] * h)
+
+            # parambtn
+            self.parambtn.place(x=self.parambtnRatio[0] * w, y=self.parambtnRatio[1] * h)
+
+            # openfile
+            self.openFileButton.place(x=self.openfileRatio[0] * w, y=self.openfileRatio[1] * h)
+
+            # convbtn
+            self.convBtn.place(x=self.convbtnRatio[0] * w, y=self.convbtnRatio[1] * h)
+
+            # folderbtn
+            self.folderbtn.place(x=self.folderbtnRatio[0] * w, y=self.folderbtnRatio[1] * h)
+
+            # supprbtn TODO: à refaire
+            self.supprbtn.place(x=self.supprbtnRatio[0] * w, y=self.supprbtnRatio[1] * h)
+            #self.supprbtn.place(x=1161, y=575)
+
+            # Volume
+            self.VolumeLabel.place(x=self.VolumeLabelRatio[0] * w, y=self.VolumeLabelRatio[1] * h)
+
+            self.width = w
+            self.height = h
+
+
+    def del_flag_menu(self, event=None):
+        if self.flagMenu:
+            self.flagMenu.onLeave()
+
+
+    def open_site(self, event=None):
+        """ Ouvre le site
+        """
+        webbrowser.open("https://bonesound.wordpress.com/")
 
 
     def loadIcons(self):
@@ -1485,6 +1822,27 @@ class Interface:
             self.fen.wait_window(self.p.top)
 
 
+    def popupMenu(self, event=None):
+        # Envoi la fenêtre à l'avant si elle existe
+        try:
+            # Place la fenêtre devant la fenêtre principale
+            self.m.top.lift()
+            self.m.top.attributes('-topmost', True)
+            self.m.top.attributes('-topmost', False)
+            # Focus la fenêtre
+            self.m.top.focus_set()
+        # Sinon la créer
+        except:
+            self.popupMenuFen = True
+            # Permet de changer entre les deux langues
+            self.menuMsg = Message(text={l: [self.languages[l]['popup'][5]]
+                                          for l in self.languages}, actualLanguage=self.langue)
+            # Crée une pop-up pour demander la valeur
+            self.m = MenuPopup(self)
+            # Met la fenêtre au dessus de la principale
+            self.fen.wait_window(self.m.top)
+
+
     def getParam(self):
         """ Récupère les paramètres de l'application
         rtype : str(path) / None, 'fr' / 'en', str / None
@@ -1570,6 +1928,15 @@ class Interface:
             try:
                 # Change le titre de la fenêtre
                 self.w.top.title(self.popupMsg.text[self.langue][0])
+            except:
+                pass
+
+        if self.popupMenuFen:
+            if not self.langue in self.menuMsg.text.keys():
+                self.menuMsg.addLang(self.langue, [self.languages[self.langue]['popup'][0]])
+            try:
+                # Change le titre de la fenêtre
+                self.m.top.title(self.menuMsg.text[self.langue][0])
             except:
                 pass
         # Si la fenêtre de traduction est ouverte
@@ -1732,8 +2099,7 @@ class Interface:
 if __name__ == "__main__":
     Interface().run()
 
-    # TODO: limiter, installer, auto-ajust, https://we.tl/t-HSjG4vUay9
-
-    """ indiquer que la langue est en anglais
-    menu de la langue (sur drapeau)
-    """
+    # TODO:
+    # limiter (++)
+    # installer (?)
+    # light / dark mode (?)

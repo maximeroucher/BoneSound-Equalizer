@@ -1,0 +1,770 @@
+{
+    "af": {
+        "nom": [
+            "Afrikaans",
+            "Afrikaans"
+        ]
+    },
+    "am": {
+        "nom": [
+            "\u12a0\u121b\u122d\u129b",
+            "Amharic"
+        ]
+    },
+    "ar": {
+        "nom": [
+            "\u0639\u0631\u0628\u0649",
+            "Arabic"
+        ]
+    },
+    "az": {
+        "nom": [
+            "Azeri",
+            "Azeri"
+        ]
+    },
+    "be": {
+        "nom": [
+            "\u0431\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0456",
+            "Belarusian"
+        ]
+    },
+    "bg": {
+        "nom": [
+            "\u0431\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438",
+            "Bulgarian"
+        ]
+    },
+    "bs": {
+        "nom": [
+            "Bosanski",
+            "Bosnian"
+        ]
+    },
+    "ceb": {
+        "nom": [
+            "Cebuano",
+            "Cebuano"
+        ]
+    },
+    "cs": {
+        "nom": [
+            "\u010de\u0161tina",
+            "Czech"
+        ]
+    },
+    "cy": {
+        "nom": [
+            "Cymraeg",
+            "Welsh"
+        ]
+    },
+    "da": {
+        "nom": [
+            "dansk",
+            "Danish"
+        ]
+    },
+    "de": {
+        "allErrorMsg": [
+            "Es ist keine Musik zum Konvertieren vorhanden",
+            "Das Format ist falsch",
+            "Sie m\u00fcssen eine Nummer eingeben"
+        ],
+        "allMsgPossible": [
+            "Derzeit keine Operation",
+            "Anwendung der Lautst\u00e4rke",
+            "Anwendung der Filter",
+            "Anwendung der Kompression",
+            "Datei speichern"
+        ],
+        "btn": [
+            " Ausgabeordner ",
+            " \u00d6ffne einen Ordner ",
+            " Personifizieren ",
+            " Konvertieren ",
+            " Musik l\u00f6schen ",
+            " \u00c4ndere die Farbe ",
+            " OK ",
+            " \u00c4ndere die Sprache "
+        ],
+        "error": [
+            "Error",
+            "Problem",
+            "Konvertierungsfehler"
+        ],
+        "hovers": [
+            "Ausgew\u00e4hlte Musik l\u00f6schen\nTastaturk\u00fcrzel: Suppr",
+            "W\u00e4hlen Sie den Ausgabeordner\nTastaturk\u00fcrzel: Strg + s",
+            "Starten Sie die Musikkonvertierung\nTastaturk\u00fcrzel: Enter",
+            "\u00d6ffnen Sie das Einstellungsfenster\nTastaturk\u00fcrzel: p",
+            "\u00d6ffnen Sie das Musikauswahlfenster\nTastaturk\u00fcrzel: Strg + o",
+            "Sprache \u00e4ndern\nTastaturk\u00fcrzel: Umschalttaste",
+            "\u00d6ffnen Sie das Personenfenster\nTastaturk\u00fcrzel: Strg + p",
+            "\u00d6ffnen Sie das Auswahlfarbfenster\nTastaturk\u00fcrzel: c",
+            "Best\u00e4tigen Sie Ihre Einstellungen\nTastaturk\u00fcrzel: Enter",
+            "Laden Sie die \u00dcbersetzung herunter\nEs sind noch {} \u00fcbrig",
+            "\u00d6ffnet das Men\u00fcfenster\nTastaturk\u00fcrzel: m"
+        ],
+        "infoMsg": [
+            "Die Konvertierung ist abgeschlossen",
+            "Die \u00dcbersetzung ist abgeschlossen"
+        ],
+        "infoTitle": [
+            "Konvertierung abgeschlossen",
+            "\u00dcbersetzung abgeschlossen"
+        ],
+        "musicName": [
+            "Stimme",
+            "Franz\u00f6sisches Lied",
+            "Klassische Musik",
+            "Basstrommel",
+            "Electro",
+            "Jazz",
+            "Lofi",
+            "Pop",
+            "Rap",
+            "Rock",
+            "RnB",
+            "Hardrock",
+            "Reggae"
+        ],
+        "nom": [
+            "Deutch",
+            "German"
+        ],
+        "popup": [
+            " Personalisierung ",
+            " die Einstellungen ",
+            " Auswahl des Ausgabeordners ",
+            " Dateiauswahl ",
+            " Sprachen ",
+            " Men\u00fc "
+        ],
+        "tags": [
+            " Liste der zu konvertierenden Musikst\u00fccke ",
+            " Liste der verschiedenen Arten von Musik ",
+            " Fortschritt der Operation ",
+            " Geben Sie die Anzahl der anzuwendenden Filter ein ",
+            " Verst\u00e4rkung (dB) ",
+            " Vorgang l\u00e4uft ",
+            " Suchleiste "
+        ],
+        "tradMsg": [
+            "Sprachpaket herunterladen"
+        ]
+    },
+    "el": {
+        "nom": [
+            "\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac",
+            "Greek"
+        ]
+    },
+    "en": {
+        "Spacing": [
+            "tags",
+            "btn",
+            "popup"
+        ],
+        "allErrorMsg": [
+            "There is no music to convert",
+            "The format is incorrect",
+            "You must enter an number"
+        ],
+        "allMsgPossible": [
+            "No operation currently",
+            "Application of the volume gain",
+            "Application of the filters",
+            "Application of the compression",
+            "Saving the file"
+        ],
+        "btn": [
+            " Output folder ",
+            " Open a file ",
+            " Personalize ",
+            " Convert ",
+            " Delete music ",
+            " Change the color ",
+            " Ok ",
+            " Change the language "
+        ],
+        "error": [
+            "Error",
+            "Problem",
+            "Conversion error"
+        ],
+        "hovers": [
+            "Delete selected music\nKeyboard shortcut : Suppr",
+            "Select the output folder\nKeyboard shortcut : Ctrl + s",
+            "Start the musique conversion\nKeyboard shortcut : Enter",
+            "Open the settings window\nKeyboard shortcut : p",
+            "Open the music selection window\nKeyboard shortcut : Ctrl + o",
+            "Change language\nKeyboard shortcut : Shift",
+            "Open the personailze window\nKeyboard shortcut : Ctrl + p",
+            "Open the selection color window\nKeyboard shortcut : c",
+            "Validate your settings\nKeyboard shortcut : Enter",
+            "Download the translation\nThere are {} left",
+            "Open the menu window\nKeyboard shortcut : m"
+        ],
+        "infoMsg": [
+            "The conversion is complete",
+            "The translation is complete"
+        ],
+        "infoTitle": [
+            "Conversion completed",
+            "Translation completed"
+        ],
+        "musicName": [
+            "Voice",
+            "French song",
+            "Classical Music",
+            "Drum & bass",
+            "Electro",
+            "Jazz",
+            "Lofi",
+            "Pop",
+            "Rap",
+            "Rock",
+            "RnB",
+            "Hard Rock",
+            "Reggae"
+        ],
+        "nom": [
+            "English",
+            "English"
+        ],
+        "popup": [
+            " Personalization ",
+            " Settings ",
+            " Output folder selection ",
+            " Files selection ",
+            " Languages ",
+            " Menu "
+        ],
+        "tags": [
+            " List of musics to convert ",
+            " List of the different type of music ",
+            " Progress of the operation ",
+            " Enter the number of filter(s) to apply ",
+            " Gain (dB) ",
+            " Operation in progress ",
+            " Search bar "
+        ],
+        "tradMsg": [
+            "Download language pack"
+        ]
+    },
+    "es": {
+        "nom": [
+            "Espa\u00f1ol",
+            "Spanish"
+        ]
+    },
+    "et": {
+        "nom": [
+            "Eesti keel",
+            "Estonian"
+        ]
+    },
+    "eu": {
+        "nom": [
+            "Euskal",
+            "Basque"
+        ]
+    },
+    "fa": {
+        "nom": [
+            "\u0641\u0627\u0631\u0633\u06cc",
+            "Persian"
+        ]
+    },
+    "fi": {
+        "nom": [
+            "Suomalainen",
+            "Finnish"
+        ]
+    },
+    "fr": {
+        "allErrorMsg": [
+            "Il n'y a pas de musique \u00e0 convertir",
+            "Le format est incorrect",
+            "Vous devez entrer un num\u00e9ro"
+        ],
+        "allMsgPossible": [
+            "Aucune op\u00e9ration actuellement",
+            "Application du gain de volume",
+            "Application des filtres",
+            "Application de la compression",
+            "Sauvegarder le fichier"
+        ],
+        "btn": [
+            " Dossier de sortie ",
+            " Ouvrir un fichier ",
+            " Personnaliser ",
+            " Convertir ",
+            " Supprimer la musique ",
+            " Changer la couleur ",
+            " Ok ",
+            " Change la langue "
+        ],
+        "error": [
+            "Erreur",
+            "Probl\u00e8me",
+            "Erreur de conversion"
+        ],
+        "hovers": [
+            "Supprimer la musique s\u00e9lectionn\u00e9e\nRaccourci clavier: Suppr",
+            "S\u00e9lectionnez le dossier de sortie\nRaccourci clavier: Ctrl + s",
+            "D\u00e9marrer la conversion de musique\nRaccourci clavier: Entr\u00e9e",
+            "Ouvre la fen\u00eatre de configuration\nRaccourci clavier: p",
+            "Ouvrir la fen\u00eatre de s\u00e9lection de musique\nRaccourci clavier: Ctrl + o",
+            "Changer de langue\nRaccourci clavier: Shift",
+            "Ouvrez la fen\u00eatre personailze\nRaccourci clavier: Ctrl + p",
+            "Ouvrir la fen\u00eatre de couleur de s\u00e9lection\nRaccourci clavier: c",
+            "Validez vos param\u00e8tres\nRaccourci clavier: Entr\u00e9e",
+            "T\u00e9l\u00e9chargement de la traduction\nIl en reste {}",
+            "Ouvre la fen\u00eatre Menu\nRaccourci clavier: m"
+        ],
+        "infoMsg": [
+            "La conversion est termin\u00c3\u00a9e"
+        ],
+        "infoTitle": [
+            "Conversion termin\u00c3\u00a9e"
+        ],
+        "musicName": [
+            "Voix",
+            "Chanson fran\u00e7aise",
+            "Musique classique",
+            "Drum & Bass",
+            "\u00c9lectro",
+            "Jazz",
+            "Lofi",
+            "Pop",
+            "Rap",
+            "Rock",
+            "RnB",
+            "Hard Rock",
+            "Reggae"
+        ],
+        "nom": [
+            "Fran\u00e7ais",
+            "French"
+        ],
+        "popup": [
+            " Personnalisation ",
+            " R\u00e9glages ",
+            " S\u00e9lection du dossier de sortie ",
+            " S\u00e9lection de fichiers ",
+            " Langues ",
+            " Menu "
+        ],
+        "tags": [
+            " Liste des musiques \u00e0 convertir ",
+            " Liste des diff\u00e9rents types de musique ",
+            " Progression de l'op\u00e9ration ",
+            " Entrez le nombre de filtres \u00e0 appliquer ",
+            " Gain (dB) ",
+            " Op\u00e9ration en cours ",
+            " Barre de recherche "
+        ],
+        "tradMsg": [
+            "T\u00e9l\u00e9chargement du paquet linguistique"
+        ]
+    },
+    "ga": {
+        "nom": [
+            "Gaeilge",
+            "Irish"
+        ]
+    },
+    "gd": {
+        "nom": [
+            "G\u00e0idhlig",
+            "Gaelic"
+        ]
+    },
+    "gu": {
+        "nom": [
+            "\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0",
+            "Gujarati"
+        ]
+    },
+    "haw": {
+        "nom": [
+            "\u014clelo Hawai\u02bbi",
+            "Hawaiian"
+        ]
+    },
+    "he": {
+        "nom": [
+            "\u05e2\u05d1\u05e8\u05d9\u05ea",
+            "Hebrew"
+        ]
+    },
+    "hi": {
+        "nom": [
+            "\u0939\u093f\u0902\u0926\u0940",
+            "Hindi"
+        ]
+    },
+    "hr": {
+        "nom": [
+            "Hrvatski",
+            "Croatian"
+        ]
+    },
+    "ht": {
+        "nom": [
+            "Krey\u00f2l ayisyen",
+            "Haitian creole"
+        ]
+    },
+    "hu": {
+        "nom": [
+            "Magyar",
+            "Hungarian"
+        ]
+    },
+    "hy": {
+        "nom": [
+            "\u0570\u0561\u0575\u0565\u0580\u0565\u0576",
+            "Armenian"
+        ]
+    },
+    "id": {
+        "nom": [
+            "bahasa Indonesia",
+            "Indonesian"
+        ]
+    },
+    "is": {
+        "nom": [
+            "\u00cdslensku",
+            "Icelandic"
+        ]
+    },
+    "it": {
+        "nom": [
+            "italiano",
+            "Italian"
+        ]
+    },
+    "ja": {
+        "nom": [
+            "\u65e5\u672c\u4eba",
+            "Japanese"
+        ]
+    },
+    "ka": {
+        "nom": [
+            "\u10e5\u10d0\u10e0\u10d7\u10e3\u10da\u10d8",
+            "Georgian"
+        ]
+    },
+    "kk": {
+        "nom": [
+            "\u049a\u0430\u0437\u0430\u049b\u0448\u0430",
+            "Kazakh"
+        ]
+    },
+    "km": {
+        "nom": [
+            "\u1797\u17b6\u179f\u17b6\u1781\u17d2\u1798\u17c2\u179a",
+            "Khmer"
+        ]
+    },
+    "kn": {
+        "nom": [
+            "\u0c95\u0ca8\u0ccd\u0ca8\u0ca1",
+            "Kannada"
+        ]
+    },
+    "ko": {
+        "nom": [
+            "\ud55c\uad6d\uc5b4",
+            "Korean"
+        ]
+    },
+    "ky": {
+        "nom": [
+            "Kirghiz",
+            "Kirghyz"
+        ]
+    },
+    "lb": {
+        "nom": [
+            "L\u00ebtzebuergesch",
+            "Luxembourgish"
+        ]
+    },
+    "lo": {
+        "nom": [
+            "Laotian",
+            "Laotian"
+        ]
+    },
+    "lt": {
+        "nom": [
+            "Lietuvi\u0173",
+            "Lithuanian"
+        ]
+    },
+    "lv": {
+        "nom": [
+            "Latvie\u0161u valoda",
+            "Latvian"
+        ]
+    },
+    "mg": {
+        "nom": [
+            "Malagasy",
+            "Malagasy"
+        ]
+    },
+    "mk": {
+        "nom": [
+            "\u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0441\u043a\u0438",
+            "Macedonian"
+        ]
+    },
+    "ml": {
+        "nom": [
+            "\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02",
+            "Malayalam"
+        ]
+    },
+    "mn": {
+        "nom": [
+            "\u041c\u043e\u043d\u0433\u043e\u043b \u0445\u044d\u043b \u0434\u044d\u044d\u0440",
+            "Mongolian"
+        ]
+    },
+    "mr": {
+        "nom": [
+            "\u092e\u0930\u093e\u0920\u0940",
+            "Marathi"
+        ]
+    },
+    "mt": {
+        "nom": [
+            "Malti",
+            "Maltese"
+        ]
+    },
+    "ne": {
+        "nom": [
+            "\u0928\u0947\u092a\u093e\u0932",
+            "Nepalese"
+        ]
+    },
+    "nl": {
+        "nom": [
+            "Nederlands",
+            "Dutch"
+        ]
+    },
+    "no": {
+        "nom": [
+            "norsk",
+            "Norwegian"
+        ]
+    },
+    "pa": {
+        "nom": [
+            "\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40",
+            "Panjabi"
+        ]
+    },
+    "pl": {
+        "nom": [
+            "Polskie",
+            "Polish"
+        ]
+    },
+    "ps": {
+        "nom": [
+            "\u067e\u069a\u062a\u0648",
+            "Pashto"
+        ]
+    },
+    "pt": {
+        "nom": [
+            "Portugu\u00eas",
+            "Portuguese"
+        ]
+    },
+    "ro": {
+        "nom": [
+            "Rom\u00e2n\u0103",
+            "Romanian"
+        ]
+    },
+    "ru": {
+        "nom": [
+            "\u0440\u0443\u0441\u0441\u043a\u0438\u0439",
+            "Russian"
+        ]
+    },
+    "sd": {
+        "nom": [
+            "\u0633\u0646\u068c\u064a",
+            "Sindhi"
+        ]
+    },
+    "si": {
+        "nom": [
+            "\u0dc3\u0dd2\u0d82\u0dc4\u0dbd\u0dba\u0dd2\u0db1\u0dca",
+            "Singhalese"
+        ]
+    },
+    "sk": {
+        "nom": [
+            "slovensk\u00fd",
+            "Slovak"
+        ]
+    },
+    "sl": {
+        "nom": [
+            "Sloven\u0161\u010dina",
+            "Slovenian"
+        ]
+    },
+    "sm": {
+        "nom": [
+            "Samoa",
+            "Samoan"
+        ]
+    },
+    "sn": {
+        "nom": [
+            "Shona",
+            "Shona"
+        ]
+    },
+    "so": {
+        "nom": [
+            "Somali",
+            "Somali"
+        ]
+    },
+    "sq": {
+        "nom": [
+            "shqiptar",
+            "Albanian"
+        ]
+    },
+    "sr": {
+        "nom": [
+            "\u0421\u0440\u043f\u0441\u043a\u0438",
+            "Serbian"
+        ]
+    },
+    "st": {
+        "nom": [
+            "Sesotho",
+            "Sesotho"
+        ]
+    },
+    "su": {
+        "nom": [
+            "Soundanais",
+            "Soundanais"
+        ]
+    },
+    "sv": {
+        "nom": [
+            "svenska",
+            "Swedish"
+        ]
+    },
+    "sw": {
+        "nom": [
+            "Kiswahili",
+            "Swahili"
+        ]
+    },
+    "ta": {
+        "nom": [
+            "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd",
+            "Tamil"
+        ]
+    },
+    "te": {
+        "nom": [
+            "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41",
+            "Telugu"
+        ]
+    },
+    "tg": {
+        "nom": [
+            "\u0422\u043e\u04b7\u0438\u043a\u04e3",
+            "Tajik"
+        ]
+    },
+    "th": {
+        "nom": [
+            "\u0e44\u0e17\u0e22",
+            "Thai"
+        ]
+    },
+    "tl": {
+        "nom": [
+            "Tagalog",
+            "Tagalog"
+        ]
+    },
+    "tr": {
+        "nom": [
+            "T\u00fcrk",
+            "Turkish"
+        ]
+    },
+    "uk": {
+        "nom": [
+            "\u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430",
+            "Ukrainian"
+        ]
+    },
+    "uz": {
+        "nom": [
+            "O'zbek",
+            "Uzbek"
+        ]
+    },
+    "vi": {
+        "nom": [
+            "Ti\u1ebfng Vi\u1ec7t",
+            "Vietnamese"
+        ]
+    },
+    "xh": {
+        "nom": [
+            "isiXhosa",
+            "Xhosa"
+        ]
+    },
+    "yo": {
+        "nom": [
+            "Yor\u00f9b\u00e1",
+            "Yoruba"
+        ]
+    },
+    "zh-CN": {
+        "nom": [
+            "\u7b80\u4f53\u4e2d\u6587",
+            "Simplified Chinese"
+        ]
+    },
+    "zh-TW": {
+        "nom": [
+            "\u7e41\u9ad4\u4e2d\u6587",
+            "Traditional Chinese"
+        ]
+    },
+    "zu": {
+        "nom": [
+            "Zulu",
+            "Zulu"
+        ]
+    }
+}
