@@ -28,6 +28,8 @@ import numpy as np
 from googletrans import Translator
 from PIL import Image, ImageTk
 from pydub import AudioSegment
+import matplotlib.pyplot as plt
+from scipy.io import wavfile
 
 
 #
@@ -1215,9 +1217,35 @@ class MenuPopup():
         # Couleur de fond de la fenêtre
         self.top.configure(background='#202225')
         # Taille de fond de la fenêtre
-        self.top.minsize(300, 200)
+        self.top.minsize(800, 600)
         # Change le titre de la pop-up
         self.top.title(self.msg.getTxt())
+
+        # Bouton du menu d'analyse
+        self.analytics = makeLBtn(self.top, self.fen, {l: [self.languages[l]['btn'][8]] for l in self.languages}, 350, 25, self.fen.analyse, 5,  width=16)
+        # Message au survol de la souris
+        makeHover(self.fen, self.analytics, {l: [self.languages[l]['hovers'][11]] for l in self.languages}, 11)
+
+        # Label contenant de "A propos"
+        self.about = makeLLabel(self.top, self.fen, {l: [self.languages[l]['tags'][7]] for l in self.languages}, 50, 100, 7)
+        # Le mesaage du "A propos"
+        msg = Message(msg=StringVar(), text={l: [self.languages[l]['about'][0]] for l in self.languages}, actualLanguage=self.fen.langue)
+        # Affiche le texte par défaut
+        msg.update()
+        # Ajoute à la liste des objets qui peuvent changer de texte
+        self.fen.alltxtObject['Stringvar'].append([msg, 'hovers', 0])
+        # Explique l'opération en cours
+        operatingLabel = Label(self.about, textvariable=msg.msg, width=93, height=27)
+        # Inclusion du label dans le cadre
+        operatingLabel.pack()
+        # Configure l'affichage du label
+        operatingLabel.configure(background='#202225', foreground="#b6b9be")
+
+        # Associe le bouton "a" à l'ouverture de menu d'analyse
+        self.top.bind('<a>', self.fen.analyse)
+
+        # Focus la fenêtre
+        self.top.focus_set()
 
 
     def cleanup(self, event=None):
@@ -2060,6 +2088,8 @@ class Interface:
 
 
     def openExplorateur(self, event=None):
+        """ Ouvre l'explorateur pour récupérer la musique à modifier
+        """
         # Change le texte
         self.openExpMsg = {l: [self.languages[l]['popup'][3]] for l in self.languages}
         # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficiers séléstionnés
@@ -2085,6 +2115,49 @@ class Interface:
             self.saveParam()
 
 
+    def analyse(self, event=None):
+        """ Ouvre l'explorateur et ouvre les musiques séléctionnées
+        """
+        # Change le texte
+        self.openExpMsg = {l: [self.languages[l]['popup'][3]] for l in self.languages}
+        # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficiers séléstionnés
+        files = easygui.fileopenbox(self.openExpMsg[self.langue][0], multiple=True, default=f"{self.MusicLink}/")
+        # Si il y a des fichiers
+        if files:
+            # Fenêtre pour afficher les musiques
+            plt.figure()
+            # S'il n'y a qu'une musique
+            if len(files) == 1:
+                # L'ouvre
+                sr, signal = wavfile.read(files[0])
+                # Récupère le signal d'une oreille
+                y = signal[:, 0]
+                # Mise à l'échelle de la coordonnée x
+                x = np.arange(len(y)) / float(sr)
+                # Affihe la musique
+                plt.plot(x, y)
+                # Ajoute le titre de la musique
+                plt.xlabel(files[0].split('\\')[-1])
+            # S'il y a plusieurs musiques
+            else:
+                # Pour chaque musique
+                for x, f in enumerate(files):
+                    # L'ouvre
+                    sr, signal = wavfile.read(f)
+                    # Récupère le signal d'une oreille
+                    y = signal[:, 0]
+                    # Mise à l'échelle de la coordonnée x
+                    z = np.arange(len(y)) / float(sr)
+                    # INdique la position de la musique
+                    plt.subplot(lf, 1, x + 1)
+                    # Affihe la musique
+                    plt.plot(z, y)
+                    # Ajoute le titre de la musique
+                    plt.xlabel(f.split('\\')[-1])
+            # Affiche la fenêtre
+            plt.show()
+
+
     def run(self):
         """ Fonction principale lance la fenêtre
         """
@@ -2100,6 +2173,4 @@ if __name__ == "__main__":
     Interface().run()
 
     # TODO:
-    # limiter (++)
     # installer (?)
-    # light / dark mode (?)

@@ -66,92 +66,9 @@
         ]
     },
     "de": {
-        "allErrorMsg": [
-            "Es ist keine Musik zum Konvertieren vorhanden",
-            "Das Format ist falsch",
-            "Sie m\u00fcssen eine Nummer eingeben"
-        ],
-        "allMsgPossible": [
-            "Derzeit keine Operation",
-            "Anwendung der Lautst\u00e4rke",
-            "Anwendung der Filter",
-            "Anwendung der Kompression",
-            "Datei speichern"
-        ],
-        "btn": [
-            " Ausgabeordner ",
-            " \u00d6ffne einen Ordner ",
-            " Personifizieren ",
-            " Konvertieren ",
-            " Musik l\u00f6schen ",
-            " \u00c4ndere die Farbe ",
-            " OK ",
-            " \u00c4ndere die Sprache "
-        ],
-        "error": [
-            "Error",
-            "Problem",
-            "Konvertierungsfehler"
-        ],
-        "hovers": [
-            "Ausgew\u00e4hlte Musik l\u00f6schen\nTastaturk\u00fcrzel: Suppr",
-            "W\u00e4hlen Sie den Ausgabeordner\nTastaturk\u00fcrzel: Strg + s",
-            "Starten Sie die Musikkonvertierung\nTastaturk\u00fcrzel: Enter",
-            "\u00d6ffnen Sie das Einstellungsfenster\nTastaturk\u00fcrzel: p",
-            "\u00d6ffnen Sie das Musikauswahlfenster\nTastaturk\u00fcrzel: Strg + o",
-            "Sprache \u00e4ndern\nTastaturk\u00fcrzel: Umschalttaste",
-            "\u00d6ffnen Sie das Personenfenster\nTastaturk\u00fcrzel: Strg + p",
-            "\u00d6ffnen Sie das Auswahlfarbfenster\nTastaturk\u00fcrzel: c",
-            "Best\u00e4tigen Sie Ihre Einstellungen\nTastaturk\u00fcrzel: Enter",
-            "Laden Sie die \u00dcbersetzung herunter\nEs sind noch {} \u00fcbrig",
-            "\u00d6ffnet das Men\u00fcfenster\nTastaturk\u00fcrzel: m"
-        ],
-        "infoMsg": [
-            "Die Konvertierung ist abgeschlossen",
-            "Die \u00dcbersetzung ist abgeschlossen"
-        ],
-        "infoTitle": [
-            "Konvertierung abgeschlossen",
-            "\u00dcbersetzung abgeschlossen"
-        ],
-        "musicName": [
-            "Stimme",
-            "Franz\u00f6sisches Lied",
-            "Klassische Musik",
-            "Basstrommel",
-            "Electro",
-            "Jazz",
-            "Lofi",
-            "Pop",
-            "Rap",
-            "Rock",
-            "RnB",
-            "Hardrock",
-            "Reggae"
-        ],
         "nom": [
             "Deutch",
             "German"
-        ],
-        "popup": [
-            " Personalisierung ",
-            " die Einstellungen ",
-            " Auswahl des Ausgabeordners ",
-            " Dateiauswahl ",
-            " Sprachen ",
-            " Men\u00fc "
-        ],
-        "tags": [
-            " Liste der zu konvertierenden Musikst\u00fccke ",
-            " Liste der verschiedenen Arten von Musik ",
-            " Fortschritt der Operation ",
-            " Geben Sie die Anzahl der anzuwendenden Filter ein ",
-            " Verst\u00e4rkung (dB) ",
-            " Vorgang l\u00e4uft ",
-            " Suchleiste "
-        ],
-        "tradMsg": [
-            "Sprachpaket herunterladen"
         ]
     },
     "el": {
@@ -161,6 +78,9 @@
         ]
     },
     "en": {
+        "about": [
+            "A text about the project"
+        ],
         "Spacing": [
             "tags",
             "btn",
@@ -186,7 +106,8 @@
             " Delete music ",
             " Change the color ",
             " Ok ",
-            " Change the language "
+            " Change the language ",
+            " Music analytics "
         ],
         "error": [
             "Error",
@@ -204,7 +125,8 @@
             "Open the selection color window\nKeyboard shortcut : c",
             "Validate your settings\nKeyboard shortcut : Enter",
             "Download the translation\nThere are {} left",
-            "Open the menu window\nKeyboard shortcut : m"
+            "Open the menu window\nKeyboard shortcut : m",
+            "Open the music analyser menu\nKeyboard shortcut : m"
         ],
         "infoMsg": [
             "The conversion is complete",
@@ -248,7 +170,8 @@
             " Enter the number of filter(s) to apply ",
             " Gain (dB) ",
             " Operation in progress ",
-            " Search bar "
+            " Search bar ",
+            " About "
         ],
         "tradMsg": [
             "Download language pack"
@@ -285,6 +208,9 @@
         ]
     },
     "fr": {
+        "about": [
+            "Texte \u00e0 propos du projet"
+        ],
         "allErrorMsg": [
             "Il n'y a pas de musique \u00e0 convertir",
             "Le format est incorrect",
@@ -305,7 +231,8 @@
             " Supprimer la musique ",
             " Changer la couleur ",
             " Ok ",
-            " Change la langue "
+            " Change la langue ",
+            " Analyse de musique "
         ],
         "error": [
             "Erreur",
@@ -323,7 +250,8 @@
             "Ouvrir la fen\u00eatre de couleur de s\u00e9lection\nRaccourci clavier: c",
             "Validez vos param\u00e8tres\nRaccourci clavier: Entr\u00e9e",
             "T\u00e9l\u00e9chargement de la traduction\nIl en reste {}",
-            "Ouvre la fen\u00eatre Menu\nRaccourci clavier: m"
+            "Ouvre la fen\u00eatre Menu\nRaccourci clavier: m",
+            "Ouvre le menu d'analyse de musique\nRaccourci clavier: a"
         ],
         "infoMsg": [
             "La conversion est termin\u00c3\u00a9e"
@@ -365,7 +293,8 @@
             " Entrez le nombre de filtres \u00e0 appliquer ",
             " Gain (dB) ",
             " Op\u00e9ration en cours ",
-            " Barre de recherche "
+            " Barre de recherche ",
+            " \u00c0 propos "
         ],
         "tradMsg": [
             "T\u00e9l\u00e9chargement du paquet linguistique"
