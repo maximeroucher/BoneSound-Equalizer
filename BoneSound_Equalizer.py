@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 
 # Librairies intégrées par défaut à Python
+import ctypes
 import json
 import math
 import os
@@ -20,13 +21,12 @@ from tkinter.ttk import Progressbar, Radiobutton, Style
 
 # Librairies à installer
 import easygui
+import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 from googletrans import Translator
 from PIL import Image, ImageTk
 from pydub import AudioSegment
-from scipy.io import wavfile
-import librosa
 
 
 #
@@ -618,8 +618,8 @@ class Equalizer(Thread):
         # Nom du fichier à transformer (déjà en wav)
         self.filename = self.get_song(filename)
         # Nom de fichier en sortie
-        ext = ".".join(filename.split("/")[-1].split('.')[:-1])
-        self.outname = f'{self.out}/out - {ext}.wav'
+        ext = ".".join(filename.split("\\")[-1].split('.')[:-1])
+        self.outname = f'{self.out}\\out - {ext}.wav'
         # Change le message de la fenêtre
         self.msg.changeMsg(4)
         self.msg.update()
@@ -638,11 +638,11 @@ class Equalizer(Thread):
         # Si la musique n'est pas en .wav
         if path[-4:] != ".wav":
             # Récupère la nom de la musique sans l'extension
-            ext = ".".join(path.split("/")[-1].split('.')[:-1])
+            ext = ".".join(path.split("\\")[-1].split('.')[:-1])
             # Si un fichier wav avec le même nom existe
             if f'{ext}.wav' in os.listdir(self.out):
                 # Retourne le fichier wav pour éciter la conversion
-                return f'{self.out}/{ext}.wav'
+                return f'{self.out}\\{ext}.wav'
             else:
                 # Il faut enlever le fichier wav de transition
                 self.delWav = True
@@ -657,7 +657,7 @@ class Equalizer(Thread):
                     # Sauvegarde le nouveau fichier
                     path = path2
                     # Lieu de sauvgarde du fichier une fois converti en .wav
-                    outname = f'{self.out}/{ext}.wav'
+                    outname = f'{self.out}\\{ext}.wav'
                     # Lance la commande sans créer de pop-up externe
                     p = subprocess.Popen(f'ffmpeg -y -i "{path}" -vn "{outname}"', stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     p_out, p_err = p.communicate(input=None)
@@ -747,8 +747,8 @@ class Equalizer(Thread):
             # Récupère et supprime le fichier
             os.remove("".join(self.outname.split("out - ")))
         # Nom de fichier en sortie
-        ext = ".".join(self.outname.split("/out - ")[-1].split('.')[:-1])
-        correct = f'{self.out}/out - {ext}.mp3'
+        ext = ".".join(self.outname.split("\\out - ")[-1].split('.')[:-1])
+        correct = f'{self.out}\\out - {ext}.mp3'
         # Change le message de la fenêtre
         self.msg.changeMsg(4)
         self.msg.update()
@@ -1404,6 +1404,7 @@ class Interface:
 
         # Déclaration d'un objet Tkinter
         self.fen = Tk()
+        self.full = False
         # Largeur de la fenêtre
         self.width = 1366
         # Hauteur de la fenêtre
@@ -1468,7 +1469,7 @@ class Interface:
         # Tout les messages d'erreurs
         self.allErrorMsg = {l: self.languages[l]['allErrorMsg'] for l in self.languages}
         # Ouvre l'image
-        self.image = ImageTk.PhotoImage(Image.open('./image/Image.png').resize((140, 140)))
+        self.image = ImageTk.PhotoImage(Image.open('./image/Image.png').resize((172, 140)))
         # L'image d'info
         self.infoImage = ImageTk.PhotoImage(Image.open('./image/info.png').resize((25, 25)))
         # L'élément séléctionné dans la liste des musiques à transformer
@@ -1511,7 +1512,7 @@ class Interface:
 
         self.labelImageRatio = [.329, .039]
         # Image qui change de couleur
-        self.LabelImage = Button(self.fen, image=self.image, width=140, height=140, background=self.color, command=self.open_site)
+        self.LabelImage = Button(self.fen, image=self.image, width=172, height=140, background=self.color, command=self.open_site)
         # Ajoute l'image à la fenêtre
         self.LabelImage.place(x=450, y=30)
         # Configure le bouton
@@ -1685,6 +1686,17 @@ class Interface:
         self.fen.bind("<Configure>", self.changeSize)
         # Si on clicque sur "m"
         self.fen.bind("<m>", self.popupMenu)
+        # Si on clicque sur "F11"
+        self.fen.bind("<F11>", self.fullscreen)
+
+
+    def fullscreen(self, event=None):
+        # Passe la fenêtre en plein écran
+        self.full = not self.full
+        if self.full:
+            self.fen.attributes("-fullscreen", True)
+        else:
+            self.fen.attributes("-fullscreen", False)
 
 
     def changeSize(self, event=None):
@@ -2119,13 +2131,14 @@ class Interface:
         self.openExpMsg = {l: [self.languages[l]['popup'][3]] for l in self.languages}
         # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficiers séléstionnés
         files = easygui.fileopenbox(self.openExpMsg[self.langue][0], multiple=True, default=f"{self.MusicLink}/")
-        files = [f for f in files if f[-4:] in self.AllMusicExtPossibles]
+        files = [f for f in files if f[-4:] in self.AllMusicExtPossibles] if files != None else []
         # Si il y a des fichiers
         if files:
             # Fenêtre pour afficher les musiques
             plt.figure()
+            lf = len(files)
             # S'il n'y a qu'une musique
-            if len(files) == 1:
+            if lf == 1:
                 # L'ouvre
                 signal, sr = librosa.load(files[0])
                 # Mise à l'échelle de la coordonnée x
@@ -2164,6 +2177,8 @@ class Interface:
 
 
 if __name__ == "__main__":
+    myappid = 'mycompany.myproduct.subproduct.version'
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     Interface().run()
 
     # TODO:

@@ -78,13 +78,13 @@
         ]
     },
     "en": {
-        "about": [
-            "A text about the project"
-        ],
         "Spacing": [
             "tags",
             "btn",
             "popup"
+        ],
+        "about": [
+            "A text about the project"
         ],
         "allErrorMsg": [
             "There is no music to convert",
@@ -231,7 +231,7 @@
             " Supprimer la musique ",
             " Changer la couleur ",
             " Ok ",
-            " Change la langue ",
+            " Changer la langue ",
             " Analyse de musique "
         ],
         "error": [
@@ -254,10 +254,10 @@
             "Ouvre le menu d'analyse de musique\nRaccourci clavier: a"
         ],
         "infoMsg": [
-            "La conversion est termin\u00c3\u00a9e"
+            "La conversion est termin\u00e9e"
         ],
         "infoTitle": [
-            "Conversion termin\u00c3\u00a9e"
+            "Conversion termin\u00e9e"
         ],
         "musicName": [
             "Voix",
