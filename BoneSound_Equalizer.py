@@ -26,6 +26,8 @@ from googletrans import Translator
 from PIL import Image, ImageTk
 from pydub import AudioSegment
 from scipy.io import wavfile
+import librosa
+
 
 #
 # ---------- Fonctions ---------------------------------------------------------------------------
@@ -2117,6 +2119,7 @@ class Interface:
         self.openExpMsg = {l: [self.languages[l]['popup'][3]] for l in self.languages}
         # Ouvre un explorateur de fichier qui retourne le chemin depuis la racine jusqu'au ficiers séléstionnés
         files = easygui.fileopenbox(self.openExpMsg[self.langue][0], multiple=True, default=f"{self.MusicLink}/")
+        files = [f for f in files if f[-4:] in self.AllMusicExtPossibles]
         # Si il y a des fichiers
         if files:
             # Fenêtre pour afficher les musiques
@@ -2124,13 +2127,11 @@ class Interface:
             # S'il n'y a qu'une musique
             if len(files) == 1:
                 # L'ouvre
-                sr, signal = wavfile.read(files[0])
-                # Récupère le signal d'une oreille
-                y = signal[:, 0]
+                signal, sr = librosa.load(files[0])
                 # Mise à l'échelle de la coordonnée x
-                x = np.arange(len(y)) / float(sr)
+                x = np.arange(len(signal)) / float(sr)
                 # Affihe la musique
-                plt.plot(x, y)
+                plt.plot(x, signal)
                 # Ajoute le titre de la musique
                 plt.xlabel(files[0].split('\\')[-1])
             # S'il y a plusieurs musiques
@@ -2138,15 +2139,13 @@ class Interface:
                 # Pour chaque musique
                 for x, f in enumerate(files):
                     # L'ouvre
-                    sr, signal = wavfile.read(f)
-                    # Récupère le signal d'une oreille
-                    y = signal[:, 0]
+                    signal, sr = librosa.load(f)
                     # Mise à l'échelle de la coordonnée x
-                    z = np.arange(len(y)) / float(sr)
+                    z = np.arange(len(signal)) / float(sr)
                     # INdique la position de la musique
                     plt.subplot(lf, 1, x + 1)
                     # Affihe la musique
-                    plt.plot(z, y)
+                    plt.plot(z, signal)
                     # Ajoute le titre de la musique
                     plt.xlabel(f.split('\\')[-1])
             # Affiche la fenêtre
