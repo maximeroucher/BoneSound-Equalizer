@@ -6,17 +6,13 @@
 from __future__ import unicode_literals
 
 # Librairies intégrées par défaut à Python
-import contextlib
 import json
 import math
 import os
 import re
 import subprocess
-import sys
-import urllib
 import time
 import webbrowser
-from collections import OrderedDict
 from threading import Thread
 from tkinter import Button, Canvas, Entry, Frame, IntVar, Label, LabelFrame, Listbox, Menu, PhotoImage, Scale, StringVar, Tk, Toplevel, messagebox, ttk
 from tkinter.colorchooser import askcolor
@@ -24,13 +20,12 @@ from tkinter.ttk import Progressbar, Radiobutton, Style
 
 # Librairies à installer
 import easygui
+import matplotlib.pyplot as plt
 import numpy as np
 from googletrans import Translator
 from PIL import Image, ImageTk
 from pydub import AudioSegment
-import matplotlib.pyplot as plt
 from scipy.io import wavfile
-
 
 #
 # ---------- Fonctions ---------------------------------------------------------------------------
@@ -1775,7 +1770,7 @@ class Interface:
                 "be": {"nom": ["\u0431\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0456", "Belarusian" ]}, "bg": {"nom": ["\u0431\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438", "Bulgarian"]}, "bs": {"nom": ["Bosanski", "Bosnian"]},
                 "ceb": {"nom": ["Cebuano", "Cebuano"]}, "cs": {"nom": ["\u010de\u0161tina", "Czech"]}, "cy": {"nom": ["Cymraeg", "Welsh"]}, "da": {"nom": ["Dansk", "Danish"]}, "de": {"nom": ["Deutch", "German"]},
                 "el": {"nom": ["\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac", "Greek"]},
-                "en": {"Spacing": ["tags", "btn", "popup"],"allErrorMsg": ["There is no music to convert", "The format is incorrect", "You must enter an number"],"allMsgPossible": ["No operation currently", "Application of the volume gain", "Application of the filters", "Application of the compression", "Saving the file"],"btn": [" Output folder ", " Open a file ", " Personalize ", " Convert ", " Delete music ", " Change the color ", " Ok ", " Change the language "],"error": ["Error", "Problem", "Conversion error"],"hovers": ["Delete selected music\nKeyboard shortcut : Suppr", "Select the output folder\nKeyboard shortcut : Ctrl + s", "Start the musique conversion\nKeyboard shortcut : Enter", "Open the settings window\nKeyboard shortcut : p", "Open the music selection window\nKeyboard shortcut : Ctrl + o", "Change language\nKeyboard shortcut : Shift", "Open the personailze window\nKeyboard shortcut : Ctrl + p", "Open the selection color window\nKeyboard shortcut : c", "Validate your settings\nKeyboard shortcut : Enter"],"infoMsg": ["The conversion is complete", "The translation is complete"],"infoTitle": ["Conversion completed", "Translation completed"],"musicName": ["Voice", "French song", "Classical Music", "Drum & bass", "Electro", "Jazz", "Lofi", "Pop", "Rap", "Rock", "RnB", "Hard Rock", "Reggae"],"nom": ["English", "English"],"popup": [" Personalization ", " Settings ", " Output folder selection ", " Files selection ", " Languages "],"tags": [" List of musics to convert ", " List of the different type of music ", " Progress of the operation ", " Enter the number of filter(s) to apply ", " Gain (dB) ", " Operation in progress ", " Search bar "],"tradMsg": ["Download language pack"]},
+                "en": {"about": ["A text about the project"],"Spacing": ["tags","btn","popup"],"allErrorMsg": ["There is no music to convert","The format is incorrect","You must enter an number"],"allMsgPossible": ["No operation currently","Application of the volume gain","Application of the filters","Application of the compression","Saving the file"],"btn": [" Output folder "," Open a file "," Personalize "," Convert "," Delete music "," Change the color "," Ok "," Change the language "," Music analytics "],"error": ["Error","Problem","Conversion error"],"hovers": ["Delete selected music\nKeyboard shortcut : Suppr","Select the output folder\nKeyboard shortcut : Ctrl + s","Start the musique conversion\nKeyboard shortcut : Enter","Open the settings window\nKeyboard shortcut : p","Open the music selection window\nKeyboard shortcut : Ctrl + o","Change language\nKeyboard shortcut : Shift","Open the personailze window\nKeyboard shortcut : Ctrl + p","Open the selection color window\nKeyboard shortcut : c","Validate your settings\nKeyboard shortcut : Enter","Download the translation\nThere are {} left","Open the menu window\nKeyboard shortcut : m","Open the music analyser menu\nKeyboard shortcut : m"],"infoMsg": ["The conversion is complete","The translation is complete"],"infoTitle": ["Conversion completed","Translation completed"],"musicName": ["Voice","French song","Classical Music","Drum & bass","Electro","Jazz","Lofi","Pop","Rap","Rock","RnB","Hard Rock","Reggae"],"nom": ["English","English"],"popup": [" Personalization "," Settings "," Output folder selection "," Files selection "," Languages "," Menu "],"tags": [" List of musics to convert "," List of the different type of music "," Progress of the operation "," Enter the number of filter(s) to apply "," Gain (dB) "," Operation in progress "," Search bar "," About "],"tradMsg": ["Download language pack"]},
                 "es": {"nom": ["Espa\u00f1ol", "Spanish"]}, "et": {"nom": ["Eesti keel", "Estonian"]}, "eu": {"nom": ["Euskal", "Basque"]},
                 "fa": {"nom": ["\u0641\u0627\u0631\u0633\u06cc", "Persian"]}, "fi": {"nom": ["Suomalainen", "Finnish"]}, "fr": {"nom": ["Fran\u00e7ais", "French"]},
                 "ga": {"nom": ["Gaeilge", "Irish"]}, "gd": {"nom": ["G\u00e0idhlig", "Gaelic"]}, "gu": {"nom": ["\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0", "Gujarati"]},
