@@ -36,7 +36,18 @@ from pydub import AudioSegment
 
 def makeHover(fen, btn, txt, n, return_msg=False):
     """ Créer un hover pour le widget donné
-    itype : Tk() / Tk.TopLevel(), Tk.Button(), {code de la lange: [messages]}, int (le numéro associé au message)
+    ---
+    param :
+
+        - fen (Tk() / Tk.TopLevel()) la fenêtre contenant le bouton
+        - btn (Tk.Button()) le bouton
+        - txt (dict{code de la lange: str}) les messages dans toutes les langues enregistrées
+        - n (int) le numéro associé au message
+        - return_msg (bool) renvoi le message
+
+    result :
+
+        - None / Message()
     """
     if n == None:
         msg = txt
@@ -57,7 +68,13 @@ def makeHover(fen, btn, txt, n, return_msg=False):
 
 def makeHoverMenu(fen, btn, txt, n):
     """ Créer un hover pour le widget donné
-    itype : Tk() / Tk.TopLevel(), Tk.Button(), {code de la lange: [messages]}, int (le numéro associé au message)
+    ---
+    param :
+
+        - fen (Tk() / Tk.TopLevel()) la fenêtre qui contient le menu
+        - btn (Tk.Button()) le bouton
+        - txt (dict{code de la lange: [messages]}) les messages dans toutes les langues enregistrées
+        - n (int) le numéro associé au message
     """
     # Permet de changer le texte contenu dans le bouton
     msg = Message(msg=StringVar(), text=txt, actualLanguage=fen.langue)
@@ -69,19 +86,34 @@ def makeHoverMenu(fen, btn, txt, n):
     HoverMenu(btn, msg, fen)
 
 
-def makeLBtn(fen, scr, txt, x, y, command, n, width=15, height=2, bg="#40444B", fg="#b6b9be"):
+def makeLBtn(fen, src, txt, x, y, command, n, width=15, height=2, bg="#40444B", fg="#b6b9be"):
     """ Créer un bouton qui peut changer de langue
-    itype : Tk() / Tk.TopLevel(), Interface() / PersoPopup() / ParamPopup(), {code de la lange: [messages]}, 2 int, func (la commande à exécuter au clic), 2 int, 2 str
-    rtype: Tk.Button()
+    ---
+    param :
+
+        - fen (Tk() / Tk.TopLevel()) la fenêtre contenant le bouton
+        - src (Interface() / PersoPopup() / ParamPopup()) la fenêtre racine
+        - txt (dict{code de la lange: str})  les messages dans toutes les langues enregistrées
+        - x (int) coordonnée horizontale du bouton
+        - y (int) coordonnée verticale du bouton
+        - command (func) la commande à exécuter au clic
+        - width (int) la largeur de la fenêtre
+        - height (int) la hauteur de la fenêtre
+        - bg (str: hex) la couleur du fond du bouton
+        - fg (str: hex) la couleur du texte du bouton
+
+    result :
+
+        - Tk.Button()
     """
     # Permet de changer le texte contenu dans le bouton
-    msg = Message(msg=StringVar(), text=txt, actualLanguage=scr.langue)
+    msg = Message(msg=StringVar(), text=txt, actualLanguage=src.langue)
     # Bouton "ouvrir un fichier" qui appelle openExplorateur au clic
     btn = Button(fen, textvariable=msg.msg, command=command, width=width, height=height)
     # Affiche le texte par défaut
     msg.update()
     # Ajoute à la liste des objets qui peuvent changer de texte
-    scr.alltxtObject['Stringvar'].append([msg, 'btn', n])
+    src.alltxtObject['Stringvar'].append([msg, 'btn', n])
     if x != None and y != None:
         # Placement du bouton dans la fenêtre
         btn.place(x=x, y=y)
@@ -90,13 +122,24 @@ def makeLBtn(fen, scr, txt, x, y, command, n, width=15, height=2, bg="#40444B", 
     return btn
 
 
-def makeLLabel(fen, scr, txt, x, y, n):
+def makeLLabel(fen, src, txt, x, y, n):
     """ Créer un labelFrame qui peut changer de langue
-    itype : Tk() / Tk.TopLevel(), Tk.Button(), {code de la lange: [messages]}, 2 int, int (le numéro associé au message)
-    rtype : Tk.LabelFrame()
+    ---
+    param :
+
+        - fen (Tk() / Tk.TopLevel()) la fenêtre contenant le labelFrame
+        - src (Interface() / PersoPopup() / ParamPopup()) la fenêtre racine
+        - txt (dict{code de la lange: str}) les messages dans toutes les langues enregistrées
+        - x (int) coordonnée horizontale du bouton
+        - y (int) coordonnée verticale du bouton
+        - n (int) le numéro associé au message
+
+    result :
+
+        - Tk.LabelFrame()
     """
     # Permet de changer le texte contenu dans le cadre
-    msg = Message(text=txt, actualLanguage=scr.langue)
+    msg = Message(text=txt, actualLanguage=src.langue)
     # Cadre contenant la liste
     lblf = LabelFrame(fen, text=msg.getTxt(), padx=10, pady=10)
     # Placement du cadre dans la fenêtre
@@ -104,15 +147,25 @@ def makeLLabel(fen, scr, txt, x, y, n):
     # Configure l'affichage du cadre
     lblf.configure(background='#202225', foreground="#b6b9be")
     # Ajoute à la liste des objets qui peuvent changer de texte
-    scr.alltxtObject['LabelFrame'].append([lblf, [msg, 'tags', n]])
+    src.alltxtObject['LabelFrame'].append([lblf, [msg, 'tags', n]])
     # Retourne le label
     return lblf
 
 
 def makeScale(fen, param, low, high, res):
     """ Crér un Scale
-    itype : Tk() / Tk.TopLevel(), IntVar(), 3 int
-    rtype: Tk.Scale()
+    ---
+    itype :
+
+        - fen (Tk() / Tk.TopLevel()) la fenêtre contenant le scale
+        - param (IntVar()) la variable du scale
+        - low (int) la borne inférieure du scale
+        - high (int) la borne supérieure du scale
+        - res (int) la résolution du scale
+
+    result :
+
+        - Tk.Scale()
     """
     # Création du curseur
     scl = Scale(fen, from_=low, to=high, resolution=1, tickinterval=res, length=300, variable=param)
@@ -125,7 +178,12 @@ def makeScale(fen, param, low, high, res):
 
 def makeRdbList(fen, src, liste):
     """ Création d'une liste de radioboutons
-    itype : Tk() / Tk.TopLevel(), Interface() / PersoPopup() / ParamPopup(), {}
+    ---
+    param :
+
+        - fen (Tk() / Tk.TopLevel()) la fenêtre contenant la liste de radiioboutons
+        - src (Interface() / PersoPopup() / ParamPopup()) la fenêtre racine
+        - liste (dict{str: Image}) le dictionnaire des drapeauxdes langues
     """
     # Compteur des radioboutons
     x = 0
@@ -150,7 +208,13 @@ class Message():
 
     def __init__(self, text, actualLanguage, addon="", msg=None):
         """ Permet de changer le texte d'un Label, LabelFrame ou Button même si ce dernier est controllé par un thread
-        itype : {code de la lange: [messages]}, code de la langue, str, tkinter.StringVar()
+        ---
+        param :
+
+            - text (dict{code de la lange: str}) les messages dans toutes les langues enregistrées
+            - actualLanguage (int) code de la langue
+            - addon (str) texte à ajouter au message
+            - msg (tkinter.StringVar()) le message
         """
         # Le StringVar perrmet de changer les labels et les bouttons
         self.msg = msg
@@ -166,40 +230,55 @@ class Message():
 
     def update(self):
         """ Change le StringVar
+        ---
         """
         self.msg.set(self.getTxt())
 
 
     def getTxt(self):
         """ Retourne le texte correspondant à la langue, au numéro et avec le formattage s'il en faut un
+        ---
         """
         return self.text[self.langue][self.actualMsg].format(self.addon)
 
 
     def switchLang(self, langue):
         """ Change la langue
-        itype : str(code de la langue)
+        ---
+        param :
+
+            - langue (str) code de la langue
         """
         self.langue = langue
 
 
     def changeMsg(self, numMsg):
         """ Change le numéro du message
-        itype : int
+        ---
+        param :
+
+            - numMsg (int)le numéro du message
         """
         self.actualMsg = numMsg
 
 
     def addPrecision(self, text):
         """ Change l'addon
-        itype : str
+        ---
+        param :
+
+            - text (str) le texte à ajouter au message
         """
         self.addon = text
 
 
     def addLang(self, l, msg):
         """ Ajoute une langue au différente langues disponible
-        itype : str (code de la langue), list (messages)
+        ---
+        param :
+
+            - l (str) code de la langue
+            - mesg (list(str)) messages associées à la langue
         """
         if l not in self.text.keys():
             self.text[l] = msg
@@ -212,15 +291,17 @@ class Message():
 class HoverInfo():
 
     def __init__(self, widget, text):
-        """
-        Message d'aide
-
+        """ Message d'aide au survol de la souris
+        ---
         Code source:
 
         - https://stackoverflow.com/questions/3221956/what-is-the-simplest-way-to-make-tooltips-in-tkinter/36221216#36221216
         - http://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
 
-        itype : tkinter.Button(), Message()
+        param :
+
+            - widget (tkinter.Button()) le bouton sur lequel le message d'aide doit s'afficher
+            - text (Message()) le message d'aide
         """
         # Le temps avant l'affichage
         self.waittime = 400
@@ -253,12 +334,14 @@ class HoverInfo():
 
     def onEnter(self, event=None):
         """ Quand la souris passe sur le bouton
+        ---
         """
         self.schedule()
 
 
     def onLeave(self, event=None):
         """ Quand la souris part du bouton
+        ---
         """
         self.unschedule()
         self.hide()
@@ -266,6 +349,7 @@ class HoverInfo():
 
     def schedule(self):
         """ Réinitialise l'identifiant du message
+        ---
         """
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.show)
@@ -273,6 +357,7 @@ class HoverInfo():
 
     def unschedule(self):
         """ Supprime l'identifiant du message
+        ---
         """
         id_ = self.id
         self.id = None
@@ -282,10 +367,12 @@ class HoverInfo():
 
     def show(self):
         """ Affiche le message
+        ---
         """
 
         def tip_pos_calculator(widget, label, tip_delta=(10, 5), pad=(5, 3, 5, 3)):
-            """ calcule l'emplacement du message à partir de celui de la souris
+            """ Calcule l'emplacement du message à partir de celui de la souris
+            ---
             """
             # Appropriation du bouton
             w = widget
@@ -354,6 +441,9 @@ class HoverInfo():
 
 
     def hide(self):
+        """ Détruit la fenêtre
+        ---
+        """
         # Appropriation de la fenêtre
         tw = self.tw
         # Si elle existe
@@ -373,15 +463,18 @@ class HoverInfo():
 class HoverMenu():
 
     def __init__(self, widget, text, fen):
-        """
-        Message d'aide
-
+        """ Message d'aide au survol de la souris
+        ---
         Code source:
 
         - https://stackoverflow.com/questions/3221956/what-is-the-simplest-way-to-make-tooltips-in-tkinter/36221216#36221216
         - http://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
 
-        itype : tkinter.Button(), Message()
+        param :
+
+            - widget (tkinter.Button()) le bouton sur lequel le message d'aide doit s'afficher
+            - text (Message()) le message d'aide
+            - fen (Tk() / Tk.TopLevel()) la fenêtre contenant le bouton
         """
         # Le temps avant l'affichage
         self.waittime = 400
@@ -415,6 +508,7 @@ class HoverMenu():
 
     def onEnter(self, event=None):
         """ Quand la souris passe sur le bouton
+        ---
         """
         if not self.fen.flagMenu:
             self.schedule()
@@ -423,6 +517,7 @@ class HoverMenu():
 
     def onLeave(self, event=None):
         """ Quand la souris part du bouton
+        ---
         """
         self.unschedule()
         self.hide()
@@ -431,6 +526,7 @@ class HoverMenu():
 
     def schedule(self):
         """ Réinitialise l'identifiant du message
+        ---
         """
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.show)
@@ -438,6 +534,7 @@ class HoverMenu():
 
     def unschedule(self):
         """ Supprime l'identifiant du message
+        ---
         """
         id_ = self.id
         self.id = None
@@ -447,10 +544,12 @@ class HoverMenu():
 
     def show(self):
         """ Affiche le message
+        ---
         """
 
         def tip_pos_calculator(widget, label, tip_delta=(10, 5), pad=(5, 3, 5, 3), h=40, w=100):
-            """ calcule l'emplacement du message à partir de celui de la souris
+            """ Calcule l'emplacement du message à partir de celui de la souris
+            ---
             """
             # récupération des dimmensions de l'écran
             s_width, s_height = widget.winfo_screenwidth(), widget.winfo_screenheight()
@@ -528,7 +627,8 @@ class HoverMenu():
 
 
     def switchfenLang(self):
-        """ CHange la langue de l'applucation
+        """ CHange la langue de l'application
+        ---
         """
         # Par défaut, la langue de l'application
         l = self.fen.langue
@@ -553,6 +653,9 @@ class HoverMenu():
 
 
     def hide(self):
+        """ Détruit la fenêtre
+        ---
+        """
         # Appropriation de la fenêtre
         tw = self.tw
         # Si elle existe
@@ -573,7 +676,12 @@ class Equalizer(Thread):
 
     def __init__(self, nbRepetition, fen, gain):
         """ Transforme la musique pour le casque
-        itype : int, Interface(), int
+        ---
+        param :
+
+            - nbRepetition (int) le nombre de fois que le filtre doit être appliqué
+            - fen (Interface() / PersoPopup() / ParamPopup()) la fenêtre
+            - gain (int) le gain appliqué au morceau après application du filtre
         """
         # Initialisation du Thread
         Thread.__init__(self)
@@ -627,7 +735,10 @@ class Equalizer(Thread):
 
     def get_song(self, path):
         """ Récupère le chemin vers la musique et convertit en wav les autres formats
-        itype : str (path)
+        ---
+        param :
+
+            - path (str: path) le chemin d'accès du morceau
         """
         # Si le fichier n'existe pas
         if self.out == "./Music" and not 'Music' in os.listdir():
@@ -673,7 +784,8 @@ class Equalizer(Thread):
 
 
     def run(self):
-        """ Transformation de la musique
+        """ Fonction lancée par start()
+        ---
         """
         # Le nombre d'étape maximale
         max_value = 2 * self.nbRepetition + 5
@@ -783,7 +895,11 @@ class LanguageManager(Thread):
 
     def __init__(self, fen, langue):
         """ Permet de charger un paquet linguistique dans l'application
-        itype : Interface() / PersoPopup() / ParamPopup(), str(code de la langue)
+        ---
+        param :
+
+            - fen (Interface() / PersoPopup() / ParamPopup()) la fenêtre
+            - langue (str) le code de la langue
         """
         # Initialisation du Thread
         Thread.__init__(self)
@@ -871,6 +987,7 @@ class LanguageManager(Thread):
 
     def translate(self):
         """ Traduit tout les textes de l'application dans la langue demandée
+        ---
         """
         while len(self.langue) > 0:
             # Récupère la première langue de la liste
@@ -926,12 +1043,14 @@ class LanguageManager(Thread):
 
     def save(self):
         """ Sauvegarde le dictionnaire dans un fichier json
+        ---
         """
         json.dump(self.data, open(self.fen.LanguageFile, "w"), sort_keys=True, indent=4)
 
 
     def run(self):
         """ La fonction appelée quand start() est appelé
+        ---
         """
         # Traduit dans la langue demandée
         self.translate()
@@ -963,8 +1082,12 @@ class LanguageManager(Thread):
 class SearchBar(Thread):
 
     def __init__(self, fen, src):
-        """ Transforme la musique pour le casque
-        itype : Tk.TopLevel(), ParamPopup()
+        """ Barre de recherche des langues
+        ---
+        param :
+
+            - fen (Tk.TopLevel()) la fenêtre contenant la barre de recherche
+            - src (ParamPopup()) la fenêtre source
         """
         # Initialisation du Thread
         Thread.__init__(self)
@@ -996,8 +1119,14 @@ class SearchBar(Thread):
 
     def closest_result(self, l):
         """ Retourne les langues les plus proche de l'entrée de l'utilisateur
-        itype : str
-        rtype : {code de la langue: image(drapeaux)}
+        ---
+        param :
+
+            - l (str) l'entrée utilisateur
+
+        result :
+
+            - dict(str (code de langue): Image() (drapeau))
         """
         # Dictionnaire qui garde les langues à retourner
         final = {}
@@ -1027,6 +1156,7 @@ class SearchBar(Thread):
 
     def run(self):
         """ Fonction appelée quand start() est appelé
+        ---
         """
         # Boucle infinie tant que self.on est vrai
         while self.on:
@@ -1073,7 +1203,10 @@ class PersoPopup():
 
     def __init__(self, fen):
         """ Pop-up pour demander le nombre de filtre à appliquer
-        itype : Interface()
+        ---
+        param :
+
+            - fen (Interface()) la fenêtre principale
         """
 
         # Récupération des varriables de la fenêtre principale
@@ -1151,7 +1284,8 @@ class PersoPopup():
 
 
     def cleanup(self, event=None):
-        """ Au clic sur le bouton Ok
+        """ Au clic sur le bouton OK
+        ---
         """
         # Récupère la valeur de l'Entry
         value = self.entry.get()
@@ -1185,7 +1319,10 @@ class MenuPopup():
 
     def __init__(self, fen):
         """ Pop-up pour demander le nombre de filtre à appliquer
-        itype : Interface()
+        ---
+        param :
+
+            - fen (Interface()) la fenêtre principale
         """
 
         # Récupération des varriables de la fenêtre principale
@@ -1246,7 +1383,8 @@ class MenuPopup():
 
 
     def cleanup(self, event=None):
-        """ Au clic sur le bouton Ok
+        """ Au clic sur le bouton OK
+        ---
         """
         self.top.destroy()
 
@@ -1260,7 +1398,10 @@ class ParamPopup():
 
     def __init__(self, fen):
         """ Pop-up de paramètre
-        itype : Interface()
+        ---
+        param :
+
+            - fen (Interface()) la fenêtre principale
         """
         # Accède aux propriétés de la fenêtre
 
@@ -1348,7 +1489,8 @@ class ParamPopup():
 
 
     def cleanup(self, event=None):
-        """ Au clic sur le bouton Ok
+        """ Au clic sur le bouton OK
+        ---
         """
         # Arrète la boucle du thread
         self.Sb.on = False
@@ -1360,6 +1502,7 @@ class ParamPopup():
 
     def changeLanguage(self):
         """ Récupère la langue séléctionnée, télécharge sa traduction si elle n'existe pas, et change la langue de l'application
+        ---
         """
         # Récupère la langue séléctionnée
         langue = list(self.allLanguages.keys())[self.selectedLanguage.get() - 1]
@@ -1399,7 +1542,9 @@ class ParamPopup():
 class Interface:
 
     def __init__(self):
-
+        """ La fenêtre principale de l'application
+        ---
+        """
         # Initialisation de la fenêtre
 
         # Déclaration d'un objet Tkinter
@@ -1691,7 +1836,12 @@ class Interface:
 
 
     def fullscreen(self, event=None):
-        # Passe la fenêtre en plein écran
+        """ Passe la fenêtre en plein écran
+        ---
+        param :
+
+            - event (event()) l'action qui déclenche l'appel de cette fonction
+        """
         self.full = not self.full
         if self.full:
             self.fen.attributes("-fullscreen", True)
@@ -1700,7 +1850,12 @@ class Interface:
 
 
     def changeSize(self, event=None):
-        # Si il s'agit d'un changement de largeur
+        """ Redimensionne la fenêtre et ses items
+        ---
+        param :
+
+            - event (event()) l'action qui déclenche l'appel de cette fonction
+        """
         w = self.fen.winfo_width()
         h = self.fen.winfo_height()
         if w != self.width or h != self.height:
@@ -1750,25 +1905,41 @@ class Interface:
 
 
     def del_flag_menu(self, event=None):
+        """ Enlève le menu quadn on clique à côté
+        ---
+        param :
+
+            - event (event()) l'action qui déclenche l'appel de cette fonction
+        """
         if self.flagMenu:
             self.flagMenu.onLeave()
 
 
     def open_site(self, event=None):
         """ Ouvre le site
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         webbrowser.open("https://bonesound.wordpress.com/")
 
 
     def loadIcons(self):
-        """ Load the app icons
-        Icons are from : https://www.flaticon.com/home
+        """ Charge les icônes de l'application
+        ---
+        - source des icônes : https://www.flaticon.com/home
         """
         return {flag.split('.')[0]: ImageTk.PhotoImage(Image.open("./flags/" + flag).resize((35, 35))) for flag in os.listdir("./flags")}
 
 
     def getAvailableLanguage(self):
         """ Retourne les languages disponible
+        ---
+        result :
+
+            - dict(str: list(str)) paquet liguistique, par défaut anglais
+            - dict(str: dict(str: list(str))) tout les paquets linguistiques
         """
         # Si le fichier de paramètre existe dans le dossier
         if self.LanguageFile in os.listdir():
@@ -1809,6 +1980,10 @@ class Interface:
 
     def popup(self, event=None):
         """ Crée une pop-up pour demander le nombre de filtre à applliquer
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Envoi la fenêtre à l'avant si elle existe
         try:
@@ -1839,6 +2014,10 @@ class Interface:
 
     def popupParam(self, event=None):
         """ Crée une pop-up de paramètres
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Envoi la fenêtre à l'avant si elle existe
         try:
@@ -1860,7 +2039,12 @@ class Interface:
 
 
     def popupMenu(self, event=None):
-        # Envoi la fenêtre à l'avant si elle existe
+        """Envoi la fenêtre à l'avant si elle existe
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
+        """
         try:
             # Place la fenêtre devant la fenêtre principale
             self.m.top.lift()
@@ -1882,7 +2066,13 @@ class Interface:
 
     def getParam(self):
         """ Récupère les paramètres de l'application
-        rtype : str(path) / None, 'fr' / 'en', str / None
+        ---
+        result :
+
+            - str (path) / None le dossier de sortie ds musiques
+            - str langue de l'application
+            - str (hex) la couleur de l'application
+            - str (path) le dossier d'origine des musiques
         """
         # Si le fichier de paramètre existe dans le dossier
         if self.ParamFile in os.listdir():
@@ -1898,6 +2088,7 @@ class Interface:
 
     def switchColor(self):
         """ Change la couleur des objets qui le peuvent (la barre de progression et les radioboutons)
+        ---
         """
         self.LabelImage.configure(background=self.color)
         # Le style de l'application
@@ -1922,6 +2113,7 @@ class Interface:
 
     def switchL(self):
         """ Change la langue de l'application
+        ---
         """
         # Pour chaque objet Message comportant un Stringvar
         for l in self.alltxtObject["Stringvar"]:
@@ -1991,7 +2183,11 @@ class Interface:
 
 
     def switchLwithoutL(self, event=None):
-        """ Chnage la langue de l'application vers la langue suivante dans la liste des langues disponible
+        """ Change la langue de l'application vers la langue suivante dans la liste des langues disponible
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Liste des codes des langues disponibles
         listelencode = list(self.languages.keys())
@@ -2005,6 +2201,7 @@ class Interface:
 
     def getColor(self, event=None):
         """ Ouvre une fenêtre pour changer la couleur
+        ---
         """
         # Ouvre la fenêtre
         color = askcolor()
@@ -2025,7 +2222,12 @@ class Interface:
 
 
     def delMusic(self, event=None):
-        # Si il y a une musique à supprimer
+        """ Supprime la / les musique(s) séléctionnée(s)
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
+        """
         try:
             # Récupère la place de la musique à supprimer
             value = self.filesList.get(self.filesList.curselection())
@@ -2044,12 +2246,17 @@ class Interface:
 
     def saveParam(self):
         """ Enregistre les paramètres
+        ---
         """
         json.dump({"OutputFile": self.saveLink, "Language": self.langue, "Color": self.color, "MusicLink": self.MusicLink}, open(self.ParamFile, "w"), indent=4, sort_keys=True)
 
 
     def getSaveLink(self, event=None):
         """ Récupère le lien vers le dossier de sauvegarde des musiques
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Change le texte
         self.openMsg = {l: [self.languages[l]['popup'][2]] for l in self.languages}
@@ -2064,6 +2271,10 @@ class Interface:
 
     def conversion(self, event=None):
         """ Lance la conversion
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Le lien vers le fichier de sauvegarde
         if self.saveLink == None:
@@ -2098,6 +2309,10 @@ class Interface:
 
     def openExplorateur(self, event=None):
         """ Ouvre l'explorateur pour récupérer la musique à modifier
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Change le texte
         self.openExpMsg = {l: [self.languages[l]['popup'][3]] for l in self.languages}
@@ -2126,6 +2341,10 @@ class Interface:
 
     def analyse(self, event=None):
         """ Ouvre l'explorateur et ouvre les musiques séléctionnées
+        ---
+        param:
+
+            - event(event()) l'action qui déclenche l'appel de cette fonction
         """
         # Change le texte
         self.openExpMsg = {l: [self.languages[l]['popup'][3]] for l in self.languages}
@@ -2166,7 +2385,8 @@ class Interface:
 
 
     def run(self):
-        """ Fonction principale lance la fenêtre
+        """ Fonction principale, lance la fenêtre
+        ---
         """
         self.fen.mainloop()
 
