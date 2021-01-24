@@ -101,7 +101,7 @@ auto-py-to-exe
 _N'oubliez pas d'ajouter ffmpeg.exe, votre icône et le dossier image pour le faire fonctionner la conversion._\
 _Don't forget to add ffmpeg.exe, your icon and the image folder to make the conversion work._
 
-## Construit avec l'outil suivant /  Built with the following tool
+## Construit avec les outils suivants /  Built with the following tools
 
 - Le convertisseur de son : [FFMPEG](https://ffmpeg.org/)
 - The Sound converter : [FFMPEG](https://ffmpeg.org/)
